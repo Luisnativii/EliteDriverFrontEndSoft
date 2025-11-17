@@ -8,6 +8,7 @@ import {
   Filter,
   Settings
 } from 'lucide-react';
+import { toast } from 'react-toastify'; 
 
 import StatusColumn from '../../components/admin/StatusColumn';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
@@ -57,6 +58,22 @@ const MaintenancePage = () => {
   const handleCloseHistory = () => {
     setSelectedVehicle(null);
   };
+
+   const handleRefreshWithToast = async () => {
+    try {
+      const result = handleRefresh();
+
+      // Por si handleRefresh es async (devuelve una promesa)
+      if (result && typeof result.then === 'function') {
+        await result;
+      }
+
+      toast.success('Mantenimientos actualizados correctamente');
+    } catch (err) {
+      toast.error('Error al actualizar los mantenimientos');
+      console.error(err);
+    }
+   };
 
   // Mostrar loading mientras se cargan auth y vehículos
   if (loading || authLoading) {
@@ -108,9 +125,9 @@ const MaintenancePage = () => {
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={handleRefresh}
+                onClick={handleRefreshWithToast}
                 disabled={operationLoading}
-                className="flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-all duration-300 border border-white/20 disabled:opacity-50"
+                className="flex items-center cursor-pointer px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-all duration-300 border border-white/20 disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${operationLoading ? 'animate-spin' : ''}`} />
                 Actualizar

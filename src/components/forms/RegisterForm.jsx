@@ -16,6 +16,15 @@ const RegisterForm = ({ onLoginClick }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
+  //fecha maxima
+  const today = new Date();
+  today.setDate(today.getDate() - 1); // Restar 1 día para que hoy no sea válido
+  const maxBirthDate = today.toISOString().split('T')[0];
+
+  //fehca minima
+   const minBirthDate = '1900-01-01';
+
+
   // Función para manejar el éxito del registro
   const handleRegistrationSuccess = (response) => {
     setRegistrationSuccess(true);
@@ -115,6 +124,8 @@ const RegisterForm = ({ onLoginClick }) => {
             type="date"
             name="birthDate"
             value={formData.birthDate}
+            max={maxBirthDate}
+            min={minBirthDate}
             onChange={handleChange}
             className={`w-full p-3 bg-white/5 backdrop-blur-sm border rounded-xl text-white focus:outline-none focus:ring-2 transition-all duration-300 ${errors.birthDate
               ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50'

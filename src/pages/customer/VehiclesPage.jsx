@@ -5,6 +5,8 @@ import { useDateContext } from '../../context/DateContext';
 import DateForm from '../../components/forms/DateForm';
 import ReservationService from '../../services/reservationService';
 import { useAuth } from '../../hooks/useAuth';
+import { toast } from 'react-toastify';
+
 
 
 const formatDateISO = (date) => new Date(date).toISOString().split('T')[0];
@@ -15,7 +17,13 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
     const navigate = useNavigate();
     const { startDate, endDate } = useDateContext();
 
-    const handleReservation = () => {
+    // Validar si el rango es de un solo día 
+    const isSameDayRange =
+        startDate &&
+        endDate &&
+        startDate === endDate;
+
+    const proceedReservation = () => {
         if (!user) {
             navigate('/login', {
                 state: { redirectTo: `/customer/reservation-page/${vehicle.id}` }
@@ -23,6 +31,16 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
         } else {
             navigate(`/customer/reservation-page/${vehicle.id}`);
         }
+    };
+
+    const handleReservationClick = () => {
+        // Bloquear si la fecha de inicio y fin son iguales
+        if (isSameDayRange) {
+            toast.error('No se puede alquilar con la misma fecha de inicio y fin.');
+            return;
+        }
+
+        proceedReservation();
     };
 
     // Calcular precio si hay fechas seleccionadas
@@ -46,7 +64,7 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
             <p className="text-white/70">{vehicle.type}</p>
             <div className="flex justify-between items-center mt-2">
                 <p className="text-white font-semibold">Renta por dia: ${vehicle.price}</p>
-                {/* Mostrar cálculo si hay fechas */}
+
                 {calculation && calculation.days > 0 && (
                     <div className="mt-2 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
                         <p className="text-sm text-white/70">
@@ -57,9 +75,14 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
                         </p>
                     </div>
                 )}
+
                 <button
-                    onClick={handleReservation}
-                    className="cursor-pointer bg-gradient-to-r from-black to-neutral-900 text-white px-4 py-2 rounded-full hover:from-neutral-600 hover:to-neutral-800 transition-all duration-300 shadow-md">
+                    onClick={handleReservationClick}
+                    className={`bg-gradient-to-r from-black to-neutral-900 text-white px-4 py-2 rounded-full transition-all duration-300 shadow-md
+                        hover:from-neutral-600 hover:to-neutral-800
+                        ${isSameDayRange ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                    `}
+                >
                     Alquilar
                 </button>
             </div>
@@ -102,6 +125,8 @@ useEffect(() => {
             console.warn('❗Fechas inválidas: inicio después del fin');
             return;
         }
+
+       
 
         const formatDate = (d) => {
             const date = new Date(d);

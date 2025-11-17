@@ -2,6 +2,8 @@
 import React from 'react';
 import { useVehicleForm } from '../../hooks/useVehicleForm';
 import { AlertCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
+
 
 const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false }) => {
   const {
@@ -118,12 +120,17 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
         ? formData.imageUrlsText.split(',').map(url => url.trim()).filter(url => url !== '')
         : []
     };
-
     try {
       await onSubmit(vehicle.id, updateData);
+
+      // Toast de éxito
+      toast.success('Vehículo actualizado correctamente');
     } catch (error) {
-      alert(`Error al actualizar el vehículo: ${error.message}`);
+      // Toast de error (puedes dejar el alert si quieres, o ambos)
+      toast.error(`Error al actualizar el vehículo: ${error.message}`);
+      // alert(`Error al actualizar el vehículo: ${error.message}`);
     }
+
   };
 
   if (!vehicle) {
@@ -323,7 +330,7 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 border border-gray-300 rounded-md text-white hover:bg-gray-50 hover:text-neutral-600"
+            className="px-6 py-2 border cursor-pointer border-gray-300 rounded-md text-white hover:bg-gray-50 hover:text-neutral-600"
             disabled={submitLoading}
           >
             Cancelar
@@ -331,7 +338,7 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
           <button
             type="submit"
             disabled={submitLoading}
-            className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-red-500 text-white cursor-pointer rounded-md hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitLoading ? 'Actualizando...' : 'Actualizar Vehículo'}
           </button>

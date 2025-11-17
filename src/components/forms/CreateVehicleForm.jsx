@@ -1,6 +1,7 @@
 // components/CreateVehicleForm.jsx
 import React from 'react';
 import { useVehicleForm } from '../../hooks/useVehicleForm';
+import { toast } from 'react-toastify';
 
 const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
   const {
@@ -94,14 +95,21 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
 
     // console.log('Datos a enviar:', processedData); // Para debug
 
-    try {
+       try {
       await onSubmit(processedData);
-      resetForm();
+
+      // TOAST DE ÉXITO
+      toast.success('Vehículo creado correctamente');
+
     } catch (error) {
-      // El error se maneja en el componente padre
+      //  TOAST DE ERROR
+      toast.error('Error al crear el vehículo');
       // console.error('Error al crear vehículo:', error);
     }
   };
+
+
+
 
   return (
     <div className=" border-none p-2">
@@ -338,7 +346,7 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 border border-gray-300 rounded-md text-gray-200 hover:bg-gray-50 hover:text-gray-700"
+            className="px-6 cursor-pointer py-2 border border-gray-300 rounded-md text-gray-200 hover:bg-gray-50 hover:text-gray-700"
             disabled={submitLoading}
           >
             Cancelar
@@ -346,7 +354,7 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
           <button
             type="submit"
             disabled={submitLoading}
-            className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className=" cursor-pointer  px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitLoading ? 'Creando...' : 'Crear Vehículo'}
           </button>
