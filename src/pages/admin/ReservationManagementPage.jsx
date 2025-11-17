@@ -18,6 +18,7 @@ import {
   Trash2,
   ArrowUpDown
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const ReservationManagementPage = () => {
 
@@ -69,6 +70,23 @@ const ReservationManagementPage = () => {
     setShowDetailModal(true);
   };
 
+    const handleRefreshWithToast = async () => {
+    try {
+      const result = handleRefresh();
+
+      // Por si handleRefresh es async (devuelve una promesa)
+      if (result && typeof result.then === 'function') {
+        await result;
+      }
+
+      toast.success('Reservas actualizadas correctamente');
+    } catch (err) {
+      toast.error('Error al actualizar las reservas');
+      console.error(err);
+    }
+  };
+
+
   // Mostrar loading mientras se cargan auth y reservas
   if (loading || authLoading) {
     return (
@@ -79,6 +97,7 @@ const ReservationManagementPage = () => {
       </div>
     );
   }
+  
 
   // Verificar si el usuario está autenticado
   if (!isAuthenticated) {
@@ -163,9 +182,9 @@ const ReservationManagementPage = () => {
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={handleRefresh}
+                onClick={handleRefreshWithToast}
                 disabled={operationLoading}
-                className="flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-all duration-300 border border-white/20 disabled:opacity-50"
+                className="flex items-center  cursor-pointer px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-all duration-300 border border-white/20 disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${operationLoading ? 'animate-spin' : ''}`} />
                 Actualizar
