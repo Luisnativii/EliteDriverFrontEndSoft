@@ -40,6 +40,32 @@ const DateForm = ({ variant = 'default', onSearch }) => {
         `
     };
 
+    // Estilos para la variante homeMobile (optimizado para pantallas pequeñas)
+    const homeMobileStyles = {
+        container: `
+            bg-white/10 backdrop-blur-md py-5 px-5 rounded-2xl 
+            shadow-xl border border-white/20 w-full max-w-sm
+            hover:bg-white/15 transition-all duration-300
+        `,
+        title: "text-white text-base font-semibold mb-4 text-center",
+        label: "text-white/90 font-medium text-xs block mb-1.5",
+        input: `
+            w-full bg-white/20 backdrop-blur-sm border border-white/30 
+            rounded-lg px-3 py-2.5 text-white placeholder-white/60 text-sm
+            focus:outline-none focus:ring-2 focus:ring-white/50 
+            focus:border-transparent transition-all duration-200
+            hover:bg-white/25
+        `,
+        button: `
+            w-full bg-gradient-to-r from-black to-neutral-700 
+            hover:from-black hover:to-white
+            text-white font-semibold py-2.5 px-5 rounded-lg text-sm
+            transition-all duration-200 transform active:scale-95
+            shadow-lg hover:shadow-xl
+            focus:outline-none focus:ring-2 focus:ring-white/50
+        `
+    };
+
     // Estilos para la variante de vehicles (compacto y horizontal)
     const vehiclesStyles = {
         container: "flex items-center gap-4",
@@ -59,13 +85,15 @@ const DateForm = ({ variant = 'default', onSearch }) => {
         `
     };
 
-    const styles = variant === 'home' ? homeStyles : vehiclesStyles;
+    const styles = variant === 'homeMobile' ? homeMobileStyles :
+        variant === 'home' ? homeStyles :
+            vehiclesStyles;
 
     if (variant === 'vehicles') {
         return (
             <div className={styles.container}>
-            
-                
+
+
                 <div>
                     <label className={styles.label}>Desde:</label>
                     <input
@@ -91,16 +119,16 @@ const DateForm = ({ variant = 'default', onSearch }) => {
         );
     }
 
-    // Layout original para la variante home
+    // Layout para home y homeMobile (vertical)
     return (
         <div className={styles.container}>
             <h3 className={styles.title}>
                 Reserva tu vehículo
             </h3>
-            
-            <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="flex-1">
+
+            <div className="flex flex-col gap-3">
+                <div className={variant === 'homeMobile' ? 'flex flex-col gap-3' : 'flex items-center gap-4'}>
+                    <div className="flex-1 w-full">
                         <label className={styles.label}>
                             Desde:
                         </label>
@@ -113,7 +141,7 @@ const DateForm = ({ variant = 'default', onSearch }) => {
                         />
                     </div>
 
-                    <div className="flex-1">
+                    <div className="flex-1 w-full">
                         <label className={styles.label}>
                             Hasta:
                         </label>
@@ -127,7 +155,7 @@ const DateForm = ({ variant = 'default', onSearch }) => {
                     </div>
                 </div>
 
-                <button 
+                <button
                     onClick={handleSearch}
                     className={styles.button}
                 >
