@@ -115,17 +115,19 @@ const VehiclesPage = () => {
     });
 
 
-useEffect(() => {
-    if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+    useEffect(() => {
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
 
-        // Validar que la fecha de inicio sea antes o igual a la de fin
-        if (start > end) {
-            console.warn('❗Fechas inválidas: inicio después del fin');
-            return;
-        }
 
+            // Validar que la fecha de inicio sea antes o igual a la de fin
+            if (start > end) {
+                console.warn('❗Fechas inválidas: inicio después del fin');
+                return;
+            }
+
+            
        
 
         const formatDate = (d) => {
@@ -147,6 +149,7 @@ useEffect(() => {
         setBusyVehicleIds([]);
     }
 }, [startDate, endDate]);
+
 
 
 
@@ -193,26 +196,56 @@ useEffect(() => {
             <h1 className="text-2xl font-bold mb-6 text-white">Vehículos Disponibles</h1>
 
             {/* Filtros */}
-            <div className="flex flex-wrap gap-4 mb-8 bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
-                {['all', 'Sedan', 'SUV', 'PickUp'].map(type => (
-                    <button
-                        key={type}
-                        onClick={() => setFilteredType(type)}
-                        className={`px-6 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 ${filteredType === type
-                            ? 'bg-white text-neutral-900 shadow-md'
-                            : 'bg-white/10 text-white hover:bg-white/20 border border-white/30'
-                            }`}
-                    >
-                        {type === 'all' ? 'Todos' : type}
-                    </button>
-                ))}
+            <div className="mb-8">
+                {/* Carrusel en mobile con scroll snap */}
+                <div className="md:hidden mb-4">
+                    <div className="bg-white/10 hide-scrollbar backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
+                        <div className="overflow-x-auto snap-x snap-mandatory hide-scrollbar">
+                            <div className="flex gap-3">
+                                {['all', 'Sedan', 'SUV', 'PickUp'].map((type) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => setFilteredType(type)}
+                                        className={`snap-start flex-shrink-0 w-[calc(33.33%-0.5rem)] px-4 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 whitespace-nowrap ${
+                                            filteredType === type
+                                                ? 'bg-white text-neutral-900 shadow-md'
+                                                : 'bg-white/10 text-white active:bg-white/20 border border-white/30'
+                                        }`}
+                                    >
+                                        {type === 'all' ? 'Todos' : type}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
-                {/* Formulario de fechas al final */}
-                <div className="ml-auto">
-                    <DateForm variant="vehicles" />
+                    {/* Formulario de fechas debajo del carrusel en mobile */}
+                    <div className="px-4 mt-3">
+                        <DateForm variant="vehicles" />
+                    </div>
+                </div>
+
+                {/* Layout normal en desktop */}
+                <div className="hidden md:flex flex-wrap gap-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-lg">
+                    {['all', 'Sedan', 'SUV', 'PickUp'].map(type => (
+                        <button
+                            key={type}
+                            onClick={() => setFilteredType(type)}
+                            className={`px-6 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 ${filteredType === type
+                                ? 'bg-white text-neutral-900 shadow-md'
+                                : 'bg-white/10 text-white hover:bg-white/20 border border-white/30'
+                            }`}
+                        >
+                            {type === 'all' ? 'Todos' : type}
+                        </button>
+                    ))}
+
+                    {/* Formulario de fechas al final en desktop */}
+                    <div className="ml-auto">
+                        <DateForm variant="vehicles" />
+                    </div>
                 </div>
             </div>
-
             {/* Mostrar información de filtros activos */}
             {hasDateFilter && (
                 <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
@@ -244,8 +277,8 @@ useEffect(() => {
                 </div>
             )}
 
-            {/* Grid de vehículos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {/* Grid de vehículos - 2 columnas en mobile, 3 en desktop */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                 {filteredVehicles.map(vehicle => (
                     <VehicleCard
                         key={vehicle.id}
