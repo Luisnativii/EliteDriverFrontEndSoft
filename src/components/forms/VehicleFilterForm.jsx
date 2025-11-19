@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, Filter, Plus, RefreshCw } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const VehicleFilterForm = ({
   searchTerm,
@@ -11,6 +12,26 @@ const VehicleFilterForm = ({
   onAddVehicle,
   onRefresh
 }) => {
+const handleRefreshClick = () => {
+    if (onRefresh) {
+      const result = onRefresh();
+
+      if (result && typeof result.then === 'function') {
+        result
+          .then(() => {
+            toast.success('Vehículos actualizados');
+          })
+          .catch(() => {
+            toast.error('Error al actualizar los vehículos');
+          });
+      } else {
+        // Si es síncrono
+        toast.success('Vehículos actualizados');
+      }
+    }
+  };
+
+
   return (
     <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 mb-8 overflow-hidden">
       <div className="px-8 py-6 border-b border-white/10">
@@ -30,8 +51,8 @@ const VehicleFilterForm = ({
           </div>
           <div className="mt-6 sm:mt-0 flex gap-3">
             <button
-              onClick={onRefresh}
-              className="group inline-flex items-center px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-sm hover:scale-105"
+              onClick={handleRefreshClick}
+              className="group inline-flex items-center px-4 py-2.5 cursor-pointer bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium rounded-lg transition-all duration-300 backdrop-blur-sm hover:scale-105"
             >
               <RefreshCw className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-300" />
               Actualizar
@@ -39,7 +60,7 @@ const VehicleFilterForm = ({
             {hasAdminRole && (
               <button
                 onClick={onAddVehicle}
-                className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white text-sm font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                className="inline-flex items-center px-6 py-2.5 cursor-pointer bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white text-sm font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Vehículo
