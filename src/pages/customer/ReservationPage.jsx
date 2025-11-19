@@ -5,6 +5,19 @@ import { useReservation }  from '../../hooks/useReservations'
 import VehicleFactDetail from '../../components/customer/VehicleFactDetail';
 import FacturationDetail from '../../components/customer/FacturationDetail';
 
+const getBase64ImageSrc = (base64) => {
+    if (!base64) return "/images/vehicle-placeholder.jpg";
+
+    const clean = base64.trim().replace(/\\n/g, "").replace(/\s/g, "");
+
+    const mimeType =
+        clean.startsWith("/") ? "image/jpeg" :
+        clean.startsWith("iVBOR") ? "image/png" :
+        clean.startsWith("UklGR") ? "image/webp" :
+        "image/jpeg";
+
+    return `data:${mimeType};base64,${clean}`;
+};
 
 const ReservationPage = () => {
     const { vehicleId } = useParams();
@@ -44,6 +57,14 @@ const ReservationPage = () => {
         );
     }
 
+    const vehicleWithDecodedImages = {
+        ...selectedVehicle,
+        mainImageDecoded: getBase64ImageSrc(selectedVehicle.mainImageBase64),
+        listImagesDecoded: Array.isArray(selectedVehicle.listImagesBase64)
+            ? selectedVehicle.listImagesBase64.map(getBase64ImageSrc)
+            : []
+    };
+
     return (
         <div className="min-h-screen py-20 px-5 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -53,10 +74,10 @@ const ReservationPage = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Detalles del Vehículo - Lado Izquierdo */}
-                    <VehicleFactDetail vehicle={selectedVehicle} />
+                    <VehicleFactDetail vehicle={vehicleWithDecodedImages} />
                     {/* Formulario de Reserva - Lado Derecho */}
                     <FacturationDetail 
-                        vehicle={selectedVehicle} 
+                        vehicle={vehicleWithDecodedImages} 
                         onReservation={handleReservation}
                         isLoading={reservationLoading}
                     />
