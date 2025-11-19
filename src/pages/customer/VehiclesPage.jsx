@@ -17,7 +17,7 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
     const navigate = useNavigate();
     const { startDate, endDate } = useDateContext();
 
-    // Validar si el rango es de un solo día 
+    // Validar si el rango es de un solo día
     const isSameDayRange =
         startDate &&
         endDate &&
@@ -49,6 +49,7 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
         : null;
 
     return (
+        /*
         <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/15 ${isFiltered ? 'ring-2 ring-white/30' : ''}`}>
             <div className="w-full h-40 bg-gray-200 rounded-lg mb-4 overflow-hidden">
                 <img
@@ -63,22 +64,60 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
             <h3 className="text-lg font-bold text-white">{vehicle.name}</h3>
             <p className="text-white/70">{vehicle.type}</p>
             <div className="flex justify-between items-center mt-2">
-                <p className="text-white font-semibold">Renta por dia: ${vehicle.price}</p>
+                <div className="gap-4 md:flex md:justify-between md:items-center"><p className="text-white font-semibold">Renta por dia: ${vehicle.price}</p>
 
-                {calculation && calculation.days > 0 && (
-                    <div className="mt-2 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
-                        <p className="text-sm text-white/70">
-                            {calculation.days} día{calculation.days > 1 ? 's' : ''}
-                        </p>
-                        <p className="text-lg font-bold text-white">
-                            Total: ${calculation.totalPrice}
-                        </p>
-                    </div>
-                )}
+                    {calculation && calculation.days > 0 && (
+                        <div className="mt-2 p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
+                            <p className="text-sm text-white/70">
+                                {calculation.days} día{calculation.days > 1 ? 's' : ''}
+                            </p>
+                            <p className="text-lg font-bold text-white">
+                                Total: ${calculation.totalPrice}
+                            </p>
+                        </div>
+                    )}</div>
 
                 <button
                     onClick={handleReservationClick}
                     className={`bg-gradient-to-r from-black to-neutral-900 text-white px-4 py-2 rounded-full transition-all duration-300 shadow-md
+                        hover:from-neutral-600 hover:to-neutral-800
+                        ${isSameDayRange ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                    `}
+                >
+                    Alquilar
+                </button>
+            </div>
+        </div>
+        * */
+        <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/15 ${isFiltered ? 'ring-2 ring-white/30' : ''}`}>
+            <div className="w-full h-40 bg-gray-200 rounded-lg mb-4 overflow-hidden">
+                <img
+                    src={vehicle.mainImageUrl}
+                    alt={vehicle.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                        e.target.style.display = 'none';
+                    }}
+                />
+            </div>
+            <div className="grid grid-rows-2 w-full ">
+                <h3 className="text-lg font-bold text-white">{vehicle.name}</h3>
+                <p className="text-white/70">{vehicle.type}</p>
+                <div className={""}>
+                    <p>{vehicle.capacity} personas</p>
+                    <p>{vehicle.kilometers} km</p>
+                    <p> ${vehicle.pricePerDay}/ dia</p>
+                    {calculation && calculation.days > 0 && (
+                        <p>${calculation.totalPrice} /{calculation.days} dia{calculation.days>1?'s':" "}</p>
+                    )}
+                </div>
+
+            </div>
+            <div className="w-full my-2">
+
+                <button
+                    onClick={handleReservationClick}
+                    className={`w-full bg-gradient-to-r from-black to-neutral-900 text-white px-4 py-2 rounded-full transition-all duration-300 shadow-md
                         hover:from-neutral-600 hover:to-neutral-800
                         ${isSameDayRange ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                     `}
@@ -127,8 +166,8 @@ const VehiclesPage = () => {
                 return;
             }
 
-            
-       
+
+
 
         const formatDate = (d) => {
             const date = new Date(d);
@@ -278,7 +317,7 @@ const VehiclesPage = () => {
             )}
 
             {/* Grid de vehículos - 2 columnas en mobile, 3 en desktop */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 {filteredVehicles.map(vehicle => (
                     <VehicleCard
                         key={vehicle.id}
