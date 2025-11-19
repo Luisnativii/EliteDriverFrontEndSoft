@@ -1,9 +1,8 @@
 // components/EditVehicleForm.jsx
+
 import React from 'react';
 import { useVehicleForm } from '../../hooks/useVehicleForm';
-import { AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
-
 
 const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false }) => {
   const {
@@ -15,45 +14,79 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
     setErrors
   } = useVehicleForm(vehicle, true); // true = modo edición
 
-  const formatNumberWithCommas = (num) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const [currentImage, setCurrentImage] = React.useState(0);
+  const [mainImageFile, setMainImageFile] = React.useState(null);
+  const [secondaryImageFiles, setSecondaryImageFiles] = React.useState([]);
+  const MAX_SIZE_MB = 5;
+  const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+  const allImages = [
+    formData.mainImageBase64,
+    ...(formData.listImagesBase64 || [])
+  ].filter(Boolean);
+
+  const goNext = () => {
+    if (allImages.length > 0)
+      setCurrentImage((prev) => (prev + 1) % allImages.length);
   };
 
-  // Función para remover comas del número
-  const removeCommas = (str) => {
-    return str.replace(/,/g, '');
+  const goPrev = () => {
+    if (allImages.length > 0)
+      setCurrentImage((prev) =>
+        prev === 0 ? allImages.length - 1 : prev - 1
+      );
   };
 
-  // Manejar cambio de kilómetros sin validación en tiempo real
-  const handleKilometersChange = (e) => {
-    const value = e.target.value;
-    const cleanValue = value.replace(/[^\d,]/g, '');
-    // Remover comas para obtener solo números
-    const numericValue = removeCommas(cleanValue);
-
-    setFormData(prev => ({
-      ...prev,
-       kilometers: numericValue, // Guardar sin comas para la base de datos
-    kilometersDisplay: numericValue ? formatNumberWithCommas(numericValue) : '' // Para mostrar con comas
-    }));
-
-    // Limpiar error específico cuando el usuario empieza a escribir
-    if (errors.kilometers) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.kilometers;
-        return newErrors;
+  const removeImage = (index) => {
+    if (index === 0) {
+      // borrar imagen principal
+      setFormData(prev => ({ ...prev, mainImageBase64: null }));
+      setMainImageFile(null);
+      // Limpiar el input de imagen principal
+      const mainInput = document.getElementById('mainImageInput');
+      if (mainInput) mainInput.value = '';
+    } else {
+      // borrar de imágenes secundarias
+      const secondaryIndex = index - 1;
+      setFormData(prev => {
+        const newList = [...prev.listImagesBase64];
+        newList.splice(secondaryIndex, 1);
+        return { ...prev, listImagesBase64: newList };
       });
+      setSecondaryImageFiles(prev => {
+        const newFiles = [...prev];
+        newFiles.splice(secondaryIndex, 1);
+        return newFiles;
+      });
+      // Si no quedan imágenes secundarias, limpiar el input
+      if (formData.listImagesBase64.length === 1) {
+        const secondaryInput = document.getElementById('secondaryImages');
+        if (secondaryInput) secondaryInput.value = '';
+      }
+    }
+    // Ajustar índice actual si es necesario
+    if (currentImage >= allImages.length - 1 && currentImage > 0) {
+      setCurrentImage(currentImage - 1);
     }
   };
 
-  // Manejar características
+  const toBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64 = reader.result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+    });
+
   const handleFeaturesChange = (e) => {
-    const value = e.target.value;
+    const value = e.target.value || '';
 
     setFormData(prev => ({
       ...prev,
-      featuresText: value, // Texto tal como lo escribe el usuario
+      featuresText: value,
       features: value ? value.split(',').map(f => f.trim()).filter(f => f !== '') : []
     }));
 
@@ -67,75 +100,35 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
     }
   };
 
-  // Manejar URLs de imágenes adicionales
-  const handleImageUrlsChange = (e) => {
-    const value = e.target.value;
-
-    setFormData(prev => ({
-      ...prev,
-      imageUrlsText: value,
-      imageUrls: value ? value.split(',').map(url => url.trim()).filter(url => url !== '') : []
-    }));
-  };
-
-  // Calcular información de mantenimiento
-  const calculateNextMaintenance = () => {
-    if (!formData.kilometers || !vehicle.kmForMaintenance) return null;
-
-    const currentKm = parseInt(formData.kilometers);
-    const interval = parseInt(vehicle.kmForMaintenance);
-    const nextMaintenanceKm = Math.ceil(currentKm / interval) * interval;
-    const kmUntilMaintenance = nextMaintenanceKm - currentKm;
-
-    return {
-      nextMaintenanceKm,
-      kmUntilMaintenance,
-      isMaintenanceNeeded: kmUntilMaintenance === 0
-    };
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validación especial para kilómetros en el submit
-    if (vehicle.kilometers && parseInt(formData.kilometers) < parseInt(vehicle.kilometers)) {
-      alert(`Los kilómetros no pueden ser menores a ${vehicle.kilometers}`);
-      return;
-    }
+    if (!validateForm()) return;
 
-    if (!validateForm()) {
-      // console.log('❌ Validación falló, errores:', errors);
-      return;
-    }
-
-    // Preparar datos para actualización - solo campos editables
-    const updateData = {
+    const processedData = {
       pricePerDay: parseFloat(formData.pricePerDay),
       kilometers: parseInt(formData.kilometers),
+      insurancePhone: formData.insurancePhone.trim(),
+
       features: formData.featuresText
-        ? formData.featuresText.split(',').map(f => f.trim()).filter(f => f !== '')
+        ? formData.featuresText.split(",").map(f => f.trim()).filter(f => f)
         : [],
-      mainImageUrl: formData.mainImageUrl || '',
-      imageUrls: formData.imageUrlsText
-        ? formData.imageUrlsText.split(',').map(url => url.trim()).filter(url => url !== '')
-        : []
+
+      mainImageBase64: formData.mainImageBase64 || null,
+      listImagesBase64: formData.listImagesBase64 || []
     };
+
     try {
-      await onSubmit(vehicle.id, updateData);
-
-      // Toast de éxito
-      toast.success('Vehículo actualizado correctamente');
+      await onSubmit(vehicle.id, processedData);
+      toast.success("Vehículo actualizado correctamente");
     } catch (error) {
-      // Toast de error (puedes dejar el alert si quieres, o ambos)
-      toast.error(`Error al actualizar el vehículo: ${error.message}`);
-      // alert(`Error al actualizar el vehículo: ${error.message}`);
+      toast.error("Error al actualizar vehículo");
     }
-
   };
 
   if (!vehicle) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="border-none p-2">
         <p className="text-gray-500">Cargando información del vehículo...</p>
       </div>
     );
@@ -143,11 +136,239 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
 
   return (
     <div className="border-none p-2">
+      <style>
+        {`
+          .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #262626;
+            border: 1px solid #404040;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .carousel-slide {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+          }
+          .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.2s;
+          }
+          .carousel-btn:hover {
+            background: rgba(0, 0, 0, 0.6);
+          }
+          .carousel-btn-left {
+            left: 0.5rem;
+          }
+          .carousel-btn-right {
+            right: 0.5rem;
+          }
+        `}
+      </style>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Información no editable - mostrar como texto */}
+        {/* CARRUSEL DE IMÁGENES */}
+        <div className="w-full">
+          <div className="carousel-container">
+            {allImages.length > 0 ? (
+              <img
+                src={`data:image/jpeg;base64,${allImages[currentImage]}`}
+                className="carousel-slide"
+                alt="preview"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500">
+                No hay imágenes seleccionadas
+              </div>
+            )}
+
+            {/* Flecha Izquierda */}
+            {allImages.length > 1 && (
+              <button
+                type="button"
+                onClick={goPrev}
+                className="carousel-btn carousel-btn-left"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Flecha Derecha */}
+            {allImages.length > 1 && (
+              <button
+                type="button"
+                onClick={goNext}
+                className="carousel-btn carousel-btn-right"
+              >
+                ›
+              </button>
+            )}
+          </div>
+
+          {/* MINIATURAS */}
+          {allImages.length > 0 && (
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-2 pt-2">
+              {allImages.map((img, index) => (
+                <div key={index} className="relative flex-shrink-0">
+                  {/* Botón de eliminar */}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs z-20 hover:bg-red-700 shadow-md"
+                  >
+                    ✕
+                  </button>
+
+                  <img
+                    src={`data:image/jpeg;base64,${img}`}
+                    className={`w-20 h-20 object-cover rounded cursor-pointer border ${
+                      currentImage === index ? "border-red-500" : "border-gray-500"
+                    }`}
+                    onClick={() => setCurrentImage(index)}
+                    alt={`Miniatura ${index + 1}`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Imagen principal */}
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-1">
+            Imagen Principal
+          </label>
+
+          <div className="relative">
+            <input
+              id="mainImageInput"
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (file.size > MAX_SIZE_BYTES) {
+                  toast.error(`La imagen principal supera los ${MAX_SIZE_MB} MB`);
+                  e.target.value = "";
+                  setMainImageFile(null);
+                  return;
+                }
+
+                const base64 = await toBase64(file);
+
+                setFormData(prev => ({
+                  ...prev,
+                  mainImageBase64: base64
+                }));
+
+                setMainImageFile(file);
+                setCurrentImage(0);
+              }}
+              className="hidden"
+            />
+
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => document.getElementById('mainImageInput').click()}
+                className="w-50 px-4 py-2 bg-red-600 text-white justify-center rounded-md hover:bg-red-700 text-left flex items-center justify-between"
+              >
+                <span className="text-sm font-semibold">Seleccionar imagen</span>
+              </button>
+              <span className="text-xs text-white pl-3 opacity-80 truncate">
+                {mainImageFile ? mainImageFile.name : 'No se ha seleccionado ninguna imagen'}
+              </span>
+            </div>
+          </div>
+
+          {errors.mainImageBase64 && (
+            <p className="text-red-500 text-sm mt-1">{errors.mainImageBase64}</p>
+          )}
+        </div>
+
+        {/* Imágenes secundarias */}
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-1">
+            Imágenes Adicionales
+          </label>
+
+          <div className="relative">
+            <input
+              id="secondaryImages"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                const validFiles = [];
+                const validBase64 = [];
+
+                for (const file of files) {
+                  if (file.size > MAX_SIZE_BYTES) {
+                    toast.error(`La imagen "${file.name}" supera los ${MAX_SIZE_MB} MB`);
+                    continue;
+                  }
+
+                  validFiles.push(file);
+                  validBase64.push(await toBase64(file));
+                }
+
+                if (validFiles.length === 0) {
+                  e.target.value = "";
+                  return;
+                }
+
+                setFormData(prev => ({
+                  ...prev,
+                  listImagesBase64: [...prev.listImagesBase64, ...validBase64]
+                }));
+
+                setSecondaryImageFiles(prev => [...prev, ...validFiles]);
+              }}
+              className="hidden"
+            />
+
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => document.getElementById('secondaryImages').click()}
+                className="w-50 px-4 py-2 bg-red-600 text-white justify-center rounded-md hover:bg-red-700 text-left flex items-center justify-between"
+              >
+                <span className="text-sm font-semibold">Seleccionar imágenes</span>
+              </button>
+              <span className="text-xs text-white pl-3 opacity-80">
+                {secondaryImageFiles.length > 0
+                  ? `${secondaryImageFiles.length} imagen${secondaryImageFiles.length !== 1 ? 'es' : ''} seleccionada${secondaryImageFiles.length !== 1 ? 's' : ''}`
+                  : 'No se ha seleccionado ninguna imagen'}
+              </span>
+            </div>
+          </div>
+        </div>
+        <span className="text-xs text-white opacity-80">Cada imagen debe pesar máximo 5 MB.</span>
+
+        {/* Información no editable */}
         <div className="p-4 rounded-lg mb-6">
-          <div className="grid grid-row-1 md:grid-cols-2 gap-4">
+          <h3 className="text-lg font-semibold text-gray-200 mb-3">Información del Vehículo</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-200 mb-1">
                 Nombre del Vehículo
@@ -215,12 +436,15 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
                 Precio por Día ($) *
               </label>
               <input
-                type="text"
+                type="number"
                 name="pricePerDay"
                 value={formData.pricePerDay}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none text-white focus:ring-2 focus:ring-gray-500 ${errors.pricePerDay ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                min="0"
+                step="0.01"
+                className={`w-full px-3 py-2 border rounded-md text-white/80 bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.pricePerDay ? 'border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="Ej: 50.00"
               />
               {errors.pricePerDay && <p className="text-red-500 text-sm mt-1">{errors.pricePerDay}</p>}
@@ -229,38 +453,43 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
             <div>
               <label className="block text-sm font-medium text-gray-200 mb-1">
                 Kilómetros Actuales *
-                <span className="text-sm text-gray-400"> (mínimo: {vehicle.kilometers})</span>
+                <span className="text-sm text-gray-400 ml-2">
+                  (mínimo: {vehicle.kilometers})
+                </span>
               </label>
               <input
-                type="text"
+                type="number"
                 name="kilometers"
-                value={formData.kilometersDisplay || formData.kilometers}
-                onChange={handleKilometersChange}
-                className={`w-full px-3 py-2 border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-gray-500 ${errors.kilometers ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                 placeholder={`Mínimo ${vehicle.kilometers ? formatNumberWithCommas(vehicle.kilometers.toString()) : ''}`}
+                value={formData.kilometers}
+                onChange={handleChange}
+                min={vehicle.kilometers || 0}
+                className={`w-full px-3 py-2 border rounded-md text-white/80 bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.kilometers ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder={`Mínimo ${vehicle.kilometers}`}
               />
-
-
               {errors.kilometers && <p className="text-red-500 text-sm mt-1">{errors.kilometers}</p>}
             </div>
           </div>
         </div>
 
-        {/* Características editables */}
+        {/* Características */}
         <div>
           <label className="block text-sm font-medium text-gray-200 mb-1">
             Características
           </label>
           <textarea
             name="featuresText"
-            value={formData.featuresText}
+            value={formData.featuresText || ''}
             onChange={handleFeaturesChange}
             rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-white resize-none focus:outline-none focus:ring-2 focus:ring-gray-500"
+            className={`w-full px-3 py-2 border rounded-md text-white/80 bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.features ? 'border-red-500' : 'border-gray-300'
+            }`}
             placeholder="Ej: Aire acondicionado, Bluetooth, GPS, Cámara trasera (separar con comas)"
           />
           <p className="text-sm text-gray-500 mt-1">Separa las características con comas</p>
+          {errors.features && <p className="text-red-500 text-sm mt-1">{errors.features}</p>}
 
           {/* Preview de características */}
           {formData.features && formData.features.length > 0 && (
@@ -277,50 +506,19 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
           )}
         </div>
 
-        {/* URLs de imágenes editables */}
-        <div>
-          <label className="block text-sm font-medium text-gray-200 mb-1">
-            URL de Imagen Principal
-          </label>
-          <input
-            type="url"
-            name="mainImageUrl"
-            value={formData.mainImageUrl}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-            placeholder="https://ejemplo.com/imagen-principal.jpg"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-200 mb-1">
-            URLs de Imágenes Adicionales (separadas por comas)
-          </label>
-          <textarea
-            name="imageUrlsText"
-            value={formData.imageUrlsText}
-            onChange={handleImageUrlsChange}
-            rows="2"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-white resize-none focus:outline-none focus:ring-2 focus:ring-gray-500"
-            placeholder="https://ejemplo.com/imagen1.jpg, https://ejemplo.com/imagen2.jpg (separar con comas)"
-          />
-          <p className="text-sm text-gray-500 mt-1">Separa las URLs con comas</p>
-        </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-200 mb-1">
             Número telefónico de la aseguradora *
           </label>
           <input
-            type="phone"
+            type="tel"
             name="insurancePhone"
             value={formData.insurancePhone}
             onChange={handleChange}
-            min="1"
-            max="50"
-            className={`w-full px-3 py-2 border rounded-md text-white/80 bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.insurancePhone ? 'border-red-500' : 'border-gray-300'
-              }`}
-            placeholder="Ej: 5"
+            className={`w-full px-3 py-2 border rounded-md text-white/80 bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.insurancePhone ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder="Ej: +503 1234-5678"
           />
           {errors.insurancePhone && <p className="text-red-500 text-sm mt-1">{errors.insurancePhone}</p>}
         </div>
@@ -330,7 +528,7 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 border cursor-pointer border-gray-300 rounded-md text-white hover:bg-gray-50 hover:text-neutral-600"
+            className="px-6 cursor-pointer py-2 border border-gray-300 rounded-md text-gray-200 hover:bg-gray-50 hover:text-gray-700"
             disabled={submitLoading}
           >
             Cancelar
@@ -338,7 +536,7 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
           <button
             type="submit"
             disabled={submitLoading}
-            className="px-6 py-2 bg-red-500 text-white cursor-pointer rounded-md hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cursor-pointer px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitLoading ? 'Actualizando...' : 'Actualizar Vehículo'}
           </button>

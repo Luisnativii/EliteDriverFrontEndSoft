@@ -122,7 +122,7 @@ const VehicleImageGallery = ({ mainImage, imageUrls = [] }) => {
                             <img
                                 src={selectedImage}
                                 alt="Vista ampliada"
-                                className="object-contain rounded-lg shadow-2xl transition-transform duration-300 hover:scale-110"
+                                className="object-contain rounded-lg shadow-2xl transition-transform duration-300"
                             />
                         </div>
 
