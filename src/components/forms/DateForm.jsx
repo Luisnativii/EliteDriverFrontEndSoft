@@ -51,7 +51,7 @@ const DateForm = ({ variant = 'default', onSearch }) => {
         label: "text-white/90 font-medium text-xs block mb-1.5",
         input: `
             w-full bg-white/20 backdrop-blur-sm border border-white/30 
-            rounded-lg px-3 py-2.5 text-white placeholder-white/60 text-sm
+            rounded-lg px-1 py-2.5 text-white placeholder-white/60 text-sm
             focus:outline-none focus:ring-2 focus:ring-white/50 
             focus:border-transparent transition-all duration-200
             hover:bg-white/25

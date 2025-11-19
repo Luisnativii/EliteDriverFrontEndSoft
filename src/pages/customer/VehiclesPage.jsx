@@ -218,7 +218,6 @@ const VehiclesPage = () => {
                     </div>
                 </div>
             </div>
-
             {/* Mostrar información de filtros activos */}
             {hasDateFilter && (
                 <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
