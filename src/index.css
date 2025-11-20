@@ -61,3 +61,11 @@ html, body {
   overflow-x: hidden;
   background-color: #525252;
 }
+
+/* Estilizar el icono nativo del input date (ponerlo blanco) */
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);   /* negro → blanco sobre fondo oscuro */
+  cursor: pointer;     /* manito al pasar sobre el icono */
+}
+
+
