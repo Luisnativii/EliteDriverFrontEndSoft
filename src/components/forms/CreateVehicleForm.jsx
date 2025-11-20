@@ -1,4 +1,5 @@
 // components/CreateVehicleForm.jsx
+
 import React from 'react';
 import { useVehicleForm } from '../../hooks/useVehicleForm';
 import { toast } from 'react-toastify';
@@ -9,7 +10,6 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
     errors,
     handleChange,
     validateForm,
-    resetForm,
     setFormData,
     setErrors
   } = useVehicleForm({}, false); // false = modo creación
@@ -19,6 +19,74 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
     'SUV',
     'PickUp',
   ];
+
+  const [currentImage, setCurrentImage] = React.useState(0);
+  const [mainImageFile, setMainImageFile] = React.useState(null);
+  const [secondaryImageFiles, setSecondaryImageFiles] = React.useState([]);
+  const MAX_SIZE_MB = 5;
+  const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+
+  const allImages = [
+    formData.mainImageBase64,
+    ...(formData.listImagesBase64 || [])
+  ].filter(Boolean);
+
+  const goNext = () => {
+    if (allImages.length > 0)
+      setCurrentImage((prev) => (prev + 1) % allImages.length);
+  };
+
+  const goPrev = () => {
+    if (allImages.length > 0)
+      setCurrentImage((prev) =>
+        prev === 0 ? allImages.length - 1 : prev - 1
+      );
+  };
+
+  const removeImage = (index) => {
+    if (index === 0) {
+      // borrar imagen principal
+      setFormData(prev => ({ ...prev, mainImageBase64: null }));
+      setMainImageFile(null);
+      // Limpiar el input de imagen principal
+      const mainInput = document.getElementById('mainImageInput');
+      if (mainInput) mainInput.value = '';
+    } else {
+      // borrar de imágenes secundarias
+      const secondaryIndex = index - 1;
+      setFormData(prev => {
+        const newList = [...prev.listImagesBase64];
+        newList.splice(secondaryIndex, 1);
+        return { ...prev, listImagesBase64: newList };
+      });
+      setSecondaryImageFiles(prev => {
+        const newFiles = [...prev];
+        newFiles.splice(secondaryIndex, 1);
+        return newFiles;
+      });
+      // Si no quedan imágenes secundarias, limpiar el input
+      if (formData.listImagesBase64.length === 1) {
+        const secondaryInput = document.getElementById('secondaryImages');
+        if (secondaryInput) secondaryInput.value = '';
+      }
+    }
+    // Ajustar índice actual si es necesario
+    if (currentImage >= allImages.length - 1 && currentImage > 0) {
+      setCurrentImage(currentImage - 1);
+    }
+  };
+
+  const toBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64 = reader.result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+    });
 
   const handleFeaturesChange = (e) => {
     const value = e.target.value || '';
@@ -39,84 +107,277 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
     }
   };
 
-  const handleImageUrlsChange = (e) => {
-    const value = e.target.value || '';
-
-    setFormData(prev => ({
-      ...prev,
-      imageUrlsText: value,
-      imageUrls: value ? value.split(',').map(url => url.trim()).filter(url => url !== '') : []
-    }));
-
-    if (errors.imageUrls) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.imageUrls;
-        return newErrors;
-      });
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
-    // Procesar los datos para que coincidan con la estructura esperada por la API
     const processedData = {
       name: formData.name.trim(),
       brand: formData.brand.trim(),
       model: formData.model.trim(),
-      vehicleType: formData.vehicleType, // Este es el campo correcto para la API
+      vehicleType: formData.vehicleType,
       capacity: parseInt(formData.capacity),
       pricePerDay: parseFloat(formData.pricePerDay),
       kilometers: parseInt(formData.kilometers),
       kmForMaintenance: parseInt(formData.kmForMaintenance),
-      mainImageUrl: formData.mainImageUrl.trim(),
-      insurancePhone: formData.insurancePhone ? formData.insurancePhone.trim() : '',
+      insurancePhone: formData.insurancePhone.trim(),
+
       features: formData.featuresText
-        ? formData.featuresText.split(',').map(f => f.trim()).filter(f => f !== '')
+        ? formData.featuresText.split(",").map(f => f.trim()).filter(f => f)
         : [],
-      imageUrls: formData.imageUrlsText
-        ? formData.imageUrlsText.split(',').map(url => url.trim()).filter(url => url !== '')
-        : []
+
+      mainImageBase64: formData.mainImageBase64 || null,
+      listImagesBase64: formData.listImagesBase64 || []
     };
 
-    // Validar que todos los campos requeridos estén presentes y sean válidos
-    if (!processedData.name || !processedData.brand || !processedData.model ||
-      !processedData.vehicleType || isNaN(processedData.capacity) ||
-      isNaN(processedData.pricePerDay) || isNaN(processedData.kilometers) ||
-      isNaN(processedData.insurancePhone) ||
-      isNaN(processedData.kmForMaintenance)) {
-      return;
-    }
-
-    // console.log('Datos a enviar:', processedData); // Para debug
-
-       try {
+    try {
       await onSubmit(processedData);
-
-      // TOAST DE ÉXITO
-      toast.success('Vehículo creado correctamente');
-
+      toast.success("Vehículo creado correctamente");
     } catch (error) {
-      //  TOAST DE ERROR
-      toast.error('Error al crear el vehículo');
-      // console.error('Error al crear vehículo:', error);
+      toast.error("Error al crear vehículo");
     }
   };
 
-
-
-
   return (
-    <div className=" border-none p-2">
+    <div className="border-none p-2">
+      <style>
+        {`
+          .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #262626;
+            border: 1px solid #404040;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .carousel-slide {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+          }
+          .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.2s;
+          }
+          .carousel-btn:hover {
+            background: rgba(0, 0, 0, 0.6);
+          }
+          .carousel-btn-left {
+            left: 0.5rem;
+          }
+          .carousel-btn-right {
+            right: 0.5rem;
+          }
+        `}
+      </style>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* CARRUSEL DE IMÁGENES */}
+        <div className="w-full">
+          <div className="carousel-container">
+            {allImages.length > 0 ? (
+              <img
+                src={`data:image/jpeg;base64,${allImages[currentImage]}`}
+                className="carousel-slide"
+                alt="preview"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500">
+                No hay imágenes seleccionadas
+              </div>
+            )}
+
+            {/* Flecha Izquierda */}
+            {allImages.length > 1 && (
+              <button
+                type="button"
+                onClick={goPrev}
+                className="carousel-btn carousel-btn-left"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Flecha Derecha */}
+            {allImages.length > 1 && (
+              <button
+                type="button"
+                onClick={goNext}
+                className="carousel-btn carousel-btn-right"
+              >
+                ›
+              </button>
+            )}
+          </div>
+
+          {/*  MINIATURAS */}
+          {allImages.length > 0 && (
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-2 pt-2">
+              {allImages.map((img, index) => (
+                <div key={index} className="relative flex-shrink-0">
+                  {/* Botón de eliminar */}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs z-20 hover:bg-red-700 shadow-md"
+                  >
+                    ✕
+                  </button>
+
+                  <img
+                    src={`data:image/jpeg;base64,${img}`}
+                    className={`w-20 h-20 object-cover rounded cursor-pointer border ${currentImage === index ? "border-red-500" : "border-gray-500"
+                      }`}
+                    onClick={() => setCurrentImage(index)}
+                    alt={`Miniatura ${index + 1}`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Imagen principal */}
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-1">
+            Imagen Principal *
+          </label>
+
+          <div className="relative">
+            <input
+              id="mainImageInput"
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (file.size > MAX_SIZE_BYTES) {
+                  toast.error(`La imagen principal supera los ${MAX_SIZE_MB} MB`);
+                  e.target.value = "";
+                  setMainImageFile(null);
+                  return;
+                }
+
+                const base64 = await toBase64(file);
+
+                setFormData(prev => ({
+                  ...prev,
+                  mainImageBase64: base64
+                }));
+
+                setMainImageFile(file);
+                setCurrentImage(0);
+              }}
+
+              className="hidden"
+            />
+
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => document.getElementById('mainImageInput').click()}
+                className="w-50 px-4 py-2 bg-red-600 text-white justify-center rounded-md hover:bg-red-700 text-left flex items-center justify-between"
+              >
+                <span className="text-sm font-semibold">Seleccionar imagen</span>
+
+              </button>
+              <span className="text-xs text-white pl-3 opacity-80 truncate">
+                {mainImageFile ? mainImageFile.name : 'No se ha seleccionado ninguna imagen'}
+              </span>
+            </div>
+
+
+          </div>
+
+          {errors.mainImageBase64 && (
+            <p className="text-red-500 text-sm mt-1">{errors.mainImageBase64}</p>
+          )}
+        </div>
+
+        {/* Imágenes secundarias */}
+        <div>
+          <label className="block text-sm font-medium text-gray-200 mb-1">
+            Imágenes Adicionales
+          </label>
+
+          <div className="relative">
+            <input
+              id="secondaryImages"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                const validFiles = [];
+                const validBase64 = [];
+
+                for (const file of files) {
+                  if (file.size > MAX_SIZE_BYTES) {
+                    toast.error(`La imagen "${file.name}" supera los ${MAX_SIZE_MB} MB`);
+                    continue; // no se agrega
+                  }
+
+                  validFiles.push(file);
+                  validBase64.push(await toBase64(file));
+                }
+
+                if (validFiles.length === 0) {
+                  e.target.value = "";
+                  return;
+                }
+
+                setFormData(prev => ({
+                  ...prev,
+                  listImagesBase64: [...prev.listImagesBase64, ...validBase64]
+                }));
+
+                setSecondaryImageFiles(prev => [...prev, ...validFiles]);
+              }}
+
+              className="hidden"
+            />
+
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => document.getElementById('secondaryImages').click()}
+                className="w-50 px-4 py-2 bg-red-600 text-white justify-center rounded-md hover:bg-red-700 text-left flex items-center justify-between"
+              >
+                <span className="text-sm font-semibold">Seleccionar imágenes</span>
+
+              </button>
+              <span className="text-xs text-white pl-3 opacity-80">
+                {secondaryImageFiles.length > 0
+                  ? `${secondaryImageFiles.length} imagen${secondaryImageFiles.length !== 1 ? 'es' : ''} seleccionada${secondaryImageFiles.length !== 1 ? 's' : ''}`
+                  : 'No se ha seleccionado ninguna imagen'}
+              </span>
+            </div>
+
+          </div>
+        </div>
+        <span className="text-xs text-white opacity-80">Cada imagen debe pesar máximo 5 MB.</span>
+
         {/* Información básica */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-200 mb-1">
               Nombre del Vehículo *
@@ -178,7 +439,7 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
             >
               <option value="">Seleccionar tipo</option>
               {vehicleTypes.map(type => (
-                <option key={type} value={type} className="bg-neutral-700 text-white focus:bg-neutral-800 ">
+                <option key={type} value={type} className="bg-neutral-700 text-white focus:bg-neutral-800">
                   {type}
                 </option>
               ))}
@@ -257,7 +518,7 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
           </div>
         </div>
 
-        {/* Características - CORREGIDO */}
+        {/* Características */}
         <div>
           <label className="block text-sm font-medium text-gray-200 mb-1">
             Características *
@@ -289,54 +550,18 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
           )}
         </div>
 
-        {/* URLs de imágenes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-200 mb-1">
-            URL de Imagen Principal *
-          </label>
-          <input
-            type="url"
-            name="mainImageUrl"
-            value={formData.mainImageUrl}
-            onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md text-white/80 bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.mainImageUrl ? 'border-red-500' : 'border-gray-300'
-              }`}
-            placeholder="https://ejemplo.com/imagen-principal.jpg"
-          />
-          {errors.mainImageUrl && <p className="text-red-500 text-sm mt-1">{errors.mainImageUrl}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-200 mb-1">
-            URLs de Imágenes Adicionales
-          </label>
-          <textarea
-            name="imageUrlsText"
-            value={formData.imageUrlsText}
-            onChange={handleImageUrlsChange}
-            rows="2"
-            className={`w-full px-3 py-2 border rounded-md text-white/80 bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.imageUrls ? 'border-red-500' : 'border-gray-300'
-              }`}
-            placeholder="https://ejemplo.com/imagen1.jpg, https://ejemplo.com/imagen2.jpg (separar con comas)"
-          />
-          <p className="text-sm text-gray-500 mt-1">Separa las URLs con comas</p>
-          {errors.imageUrls && <p className="text-red-500 text-sm mt-1">{errors.imageUrls}</p>}
-        </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-200 mb-1">
             Número telefónico de la aseguradora *
           </label>
           <input
-            type="phone"
+            type="tel"
             name="insurancePhone"
             value={formData.insurancePhone}
             onChange={handleChange}
-            min="1"
-            max="50"
             className={`w-full px-3 py-2 border rounded-md text-white/80 bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.insurancePhone ? 'border-red-500' : 'border-gray-300'
               }`}
-            placeholder="Ej: 5"
+            placeholder="Ej: +503 1234-5678"
           />
           {errors.insurancePhone && <p className="text-red-500 text-sm mt-1">{errors.insurancePhone}</p>}
         </div>
@@ -354,7 +579,7 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
           <button
             type="submit"
             disabled={submitLoading}
-            className=" cursor-pointer  px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cursor-pointer px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitLoading ? 'Creando...' : 'Crear Vehículo'}
           </button>

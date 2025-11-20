@@ -12,14 +12,14 @@ const MyReservationPage = () => {
     const { cancelReservation } = useReservation();
 
     const formatDateLocal = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'America/El_Salvador', // O ajustá según tu zona
-  });
-};
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            timeZone: 'America/El_Salvador', // O ajustá según tu zona
+        });
+    };
 
 
 
@@ -85,6 +85,22 @@ const MyReservationPage = () => {
         return 'Desconocida';
     };
 
+    const decodeBase64Image = (base64) => {
+        if (!base64) return null;
+
+        const isPng = base64.trim().startsWith("iVBOR");
+        const isWebp = base64.trim().startsWith("UklGR");
+
+        const mime = isPng
+            ? "image/png"
+            : isWebp
+                ? "image/webp"
+                : "image/jpeg";
+
+        return `data:${mime};base64,${base64}`;
+    };
+
+
 
 
     return (
@@ -104,10 +120,14 @@ const MyReservationPage = () => {
                                 className="w-full h-40 overflow-hidden rounded-md mb-3"
                             >
                                 <img
-                                    src={res.vehicle.mainImageUrl}
+                                    src={decodeBase64Image(res.vehicle.mainImageBase64)}
                                     alt={res.vehicle.name}
                                     className="h-full w-full object-cover"
+                                    onError={(e) => {
+                                        e.target.src = '/images/vehicle-placeholder.jpg';
+                                    }}
                                 />
+
                             </div>
 
 

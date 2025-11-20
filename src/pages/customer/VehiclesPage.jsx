@@ -39,6 +39,22 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
         }
     };
 
+    // Detecta MIME y reconstruye el src base64
+    const getBase64ImageSrc = (base64) => {
+        if (!base64) return "/images/vehicle-placeholder.jpg";
+
+        const clean = base64.trim().replace(/\\n/g, "").replace(/\s/g, "");
+
+        const mimeType =
+            clean.startsWith("/") ? "image/jpeg" :
+                clean.startsWith("iVBOR") ? "image/png" :
+                    clean.startsWith("UklGR") ? "image/webp" :
+                        "image/jpeg";
+
+        return `data:${mimeType};base64,${clean}`;
+    };
+
+
     const handleReservationClick = () => {
         // Bloquear si la fecha de inicio y fin son iguales
         if (isSameDayRange) {
@@ -56,14 +72,13 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
 
     return (
         <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/15 ${isFiltered ? 'ring-2 ring-white/30' : ''}`}>
+            {/* IMAGEN BASE64 */}
             <div className="w-full h-40 bg-gray-200 rounded-lg mb-4 overflow-hidden">
                 <img
-                    src={vehicle.mainImageUrl}
+                    src={getBase64ImageSrc(vehicle.mainImageBase64)}
                     alt={vehicle.name}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                        e.target.style.display = 'none';
-                    }}
+                    onError={(e) => e.target.src = "/images/vehicle-placeholder.jpg"}
                 />
             </div>
             <h3 className="text-lg font-bold text-white">{vehicle.name}</h3>
@@ -140,25 +155,25 @@ const VehiclesPage = () => {
 
 
 
-        const formatDate = (d) => {
-            const date = new Date(d);
-            const day = date.getDate().toString().padStart(2, '0');
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}-${month}-${year}`; // formato esperado por el backend
-        };
+            const formatDate = (d) => {
+                const date = new Date(d);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}-${month}-${year}`; // formato esperado por el backend
+            };
 
-        ReservationService.getReservationsByDateRange(formatDate(startDate), formatDate(endDate))
-            .then(reservations => {
-                const busyIds = reservations.map(r => r.vehicle.id);
-                setBusyVehicleIds(busyIds);
-            })
-            .catch(console.error);
-    } else {
-        // Si no hay fechas seleccionadas, limpiar la lista de vehículos ocupados
-        setBusyVehicleIds([]);
-    }
-}, [startDate, endDate]);
+            ReservationService.getReservationsByDateRange(formatDate(startDate), formatDate(endDate))
+                .then(reservations => {
+                    const busyIds = reservations.map(r => r.vehicle.id);
+                    setBusyVehicleIds(busyIds);
+                })
+                .catch(console.error);
+        } else {
+            // Si no hay fechas seleccionadas, limpiar la lista de vehículos ocupados
+            setBusyVehicleIds([]);
+        }
+    }, [startDate, endDate]);
 
 
 
@@ -216,11 +231,10 @@ const VehiclesPage = () => {
                                     <button
                                         key={type}
                                         onClick={() => setFilteredType(type)}
-                                        className={`snap-start flex-shrink-0 w-[calc(33.33%-0.5rem)] px-4 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 whitespace-nowrap ${
-                                            filteredType === type
+                                        className={`snap-start flex-shrink-0 w-[calc(33.33%-0.5rem)] px-4 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 whitespace-nowrap ${filteredType === type
                                                 ? 'bg-white text-neutral-900 shadow-md'
                                                 : 'bg-white/10 text-white active:bg-white/20 border border-white/30'
-                                        }`}
+                                            }`}
                                     >
                                         {type === 'all' ? 'Todos' : type}
                                     </button>
@@ -244,7 +258,7 @@ const VehiclesPage = () => {
                             className={`px-6 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 ${filteredType === type
                                 ? 'bg-white text-neutral-900 shadow-md'
                                 : 'bg-white/10 text-white hover:bg-white/20 border border-white/30'
-                            }`}
+                                }`}
                         >
                             {type === 'all' ? 'Todos' : type}
                         </button>
