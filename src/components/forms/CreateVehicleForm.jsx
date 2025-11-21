@@ -26,6 +26,106 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
   const MAX_SIZE_MB = 5;
   const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
+  const validateImageFile = (file) => {
+    // Validar tipo de archivo de forma estricta
+    const validMimeTypes = ['image/jpeg', 'image/png'];
+    const validExtensions = ['.jpg', '.jpeg', '.png'];
+    
+    // Verificar MIME type
+    if (!validMimeTypes.includes(file.type)) {
+      toast.error('Por favor, selecciona una imagen de tipo PNG o JPEG.');
+      return false;
+    }
+
+    // Verificar extensión del archivo
+    const fileName = file.name.toLowerCase();
+    const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+    if (!validExtensions.includes(fileExtension)) {
+      toast.error('Por favor, selecciona una imagen de tipo PNG o JPEG.');
+      return false;
+    }
+
+    // Validar tamaño de archivo
+    if (file.size > MAX_SIZE_BYTES) {
+      toast.error(`La imagen supera el tamaño máximo de ${MAX_SIZE_MB} MB.`);
+      return false;
+    }
+
+    return true;
+  };
+
+  const toBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64 = reader.result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+    });
+
+  const handleMainImageChange = async (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!validateImageFile(file)) {
+      e.target.value = ''; // Limpiar input
+      return;
+    }
+
+    try {
+      const base64 = await toBase64(file);
+      setFormData((prev) => ({
+        ...prev,
+        mainImageBase64: base64,
+      }));
+      setMainImageFile(file);
+      setCurrentImage(0);
+    } catch (error) {
+      toast.error('Error al procesar la imagen');
+      e.target.value = '';
+    }
+  };
+
+  const handleSecondaryImagesChange = async (e) => {
+    const files = e.target.files;
+
+    if (!files || files.length === 0) return;
+
+    try {
+      const validFiles = [];
+      const base64Array = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        if (!validateImageFile(file)) {
+          continue; // Saltar este archivo
+        }
+
+        validFiles.push(file);
+        const base64 = await toBase64(file);
+        base64Array.push(base64);
+      }
+
+      if (validFiles.length === 0) {
+        e.target.value = '';
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        listImagesBase64: [...(prev.listImagesBase64 || []), ...base64Array],
+      }));
+
+      setSecondaryImageFiles((prev) => [...prev, ...validFiles]);
+    } catch (error) {
+      toast.error('Error al procesar las imágenes');
+      e.target.value = '';
+    }
+  };
 
   const allImages = [
     formData.mainImageBase64,
@@ -76,17 +176,6 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
       setCurrentImage(currentImage - 1);
     }
   };
-
-  const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64 = reader.result.split(",")[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-    });
 
   const handleFeaturesChange = (e) => {
     const value = e.target.value || '';
@@ -263,29 +352,8 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
             <input
               id="mainImageInput"
               type="file"
-              accept="image/*"
-              onChange={async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                if (file.size > MAX_SIZE_BYTES) {
-                  toast.error(`La imagen principal supera los ${MAX_SIZE_MB} MB`);
-                  e.target.value = "";
-                  setMainImageFile(null);
-                  return;
-                }
-
-                const base64 = await toBase64(file);
-
-                setFormData(prev => ({
-                  ...prev,
-                  mainImageBase64: base64
-                }));
-
-                setMainImageFile(file);
-                setCurrentImage(0);
-              }}
-
+              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+              onChange={handleMainImageChange}
               className="hidden"
             />
 
@@ -321,38 +389,9 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
             <input
               id="secondaryImages"
               type="file"
-              accept="image/*"
+              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
               multiple
-              onChange={async (e) => {
-                const files = Array.from(e.target.files);
-                if (files.length === 0) return;
-
-                const validFiles = [];
-                const validBase64 = [];
-
-                for (const file of files) {
-                  if (file.size > MAX_SIZE_BYTES) {
-                    toast.error(`La imagen "${file.name}" supera los ${MAX_SIZE_MB} MB`);
-                    continue; // no se agrega
-                  }
-
-                  validFiles.push(file);
-                  validBase64.push(await toBase64(file));
-                }
-
-                if (validFiles.length === 0) {
-                  e.target.value = "";
-                  return;
-                }
-
-                setFormData(prev => ({
-                  ...prev,
-                  listImagesBase64: [...prev.listImagesBase64, ...validBase64]
-                }));
-
-                setSecondaryImageFiles(prev => [...prev, ...validFiles]);
-              }}
-
+              onChange={handleSecondaryImagesChange}
               className="hidden"
             />
 
@@ -374,7 +413,7 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
 
           </div>
         </div>
-        <span className="text-xs text-white opacity-80">Cada imagen debe pesar máximo 5 MB.</span>
+        <span className="text-xs text-white opacity-80">Cada imagen debe pesar máximo 5 MB. Solo se aceptan formatos PNG, JPG y JPEG.</span>
 
         {/* Información básica */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
