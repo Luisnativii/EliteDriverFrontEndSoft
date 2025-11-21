@@ -19,7 +19,7 @@ export const useRegister = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         // Formateo especial para DUI (solo números, máximo 9)
         if (name === 'dui') {
             const numericValue = value.replace(/\D/g, '').slice(0, 9);
@@ -75,15 +75,15 @@ export const useRegister = () => {
         } else {
             const today = new Date();
             const birthDate = new Date(formData.birthDate);
-            
+
             // Calcular edad correctamente considerando mes y día
             let age = today.getFullYear() - birthDate.getFullYear();
             const monthDiff = today.getMonth() - birthDate.getMonth();
-            
+
             if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
                 age--;
             }
-            
+
             if (age < 18) {
                 newErrors.birthDate = 'Debes ser mayor de 18 años';
             } else if (age > 100) {
@@ -98,11 +98,13 @@ export const useRegister = () => {
             newErrors.dui = 'El DUI debe tener 9 dígitos';
         }
 
-        // Validación de teléfono
+        // Teléfono (8 dígitos y debe iniciar con 6 o 7)
         if (!formData.phoneNumber) {
             newErrors.phoneNumber = 'El número de teléfono es requerido';
         } else if (formData.phoneNumber.length !== 8) {
             newErrors.phoneNumber = 'El número de teléfono debe tener 8 dígitos';
+        } else if (!/^[67]/.test(formData.phoneNumber)) {
+            newErrors.phoneNumber = 'El número de teléfono debe iniciar con 6 o 7';
         }
 
         // Validación de email
@@ -140,8 +142,8 @@ export const useRegister = () => {
             // Formatear DUI correctamente para la API
             dui: data.dui.length === 9 ? `${data.dui.slice(0, 8)}-${data.dui.slice(8)}` : data.dui,
             // Formatear teléfono correctamente para la API  
-            phoneNumber: data.phoneNumber.length === 8 ? 
-                `${data.phoneNumber.slice(0, 4)}-${data.phoneNumber.slice(4)}` : 
+            phoneNumber: data.phoneNumber.length === 8 ?
+                `${data.phoneNumber.slice(0, 4)}-${data.phoneNumber.slice(4)}` :
                 data.phoneNumber,
             email: data.email.trim().toLowerCase(),
             password: data.password,
@@ -151,25 +153,25 @@ export const useRegister = () => {
 
     const handleSubmit = async (e, onSuccess) => {
         e.preventDefault();
-        
+
         // Limpiar errores previos
         setErrors({});
-        
+
         if (!validateForm()) {
             return;
         }
 
         setIsLoading(true);
-        
+
         try {
             // Formatear datos para la API
             const formattedData = formatDataForAPI(formData);
             // console.log('Datos formateados para API:', formattedData);
-            
+
             // Llamar al servicio de registro
             const response = await register(formattedData);
             // console.log('Registro exitoso:', response);
-            
+
             // Reset form después del éxito
             setFormData({
                 firstName: '',
@@ -181,15 +183,15 @@ export const useRegister = () => {
                 password: '',
                 confirmPassword: ''
             });
-            
+
             // Ejecutar callback de éxito si se proporciona
             if (onSuccess && typeof onSuccess === 'function') {
                 onSuccess(response);
             }
-            
+
         } catch (error) {
             // console.error('Error en el registro:', error);
-            
+
             // Manejar errores específicos
             if (error.message) {
                 setErrors({ submit: error.message });
