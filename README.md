@@ -96,17 +96,36 @@ Los usuarios pueden:
 ```
 elite-drive-frontend/
 ├── src/
+│   ├── assets/
+|   │   ├── jpg/
+|   │   ├── png/
 │   ├── components/
+|   │   ├── admin/
+|   │   ├── common/
+|   │   ├── customer/
+|   │   ├── forms/
+|   │   ├── layout/
+|   │   ├── reservation/
+|   │   ├── ui/
+|   │   ├── vehicle/
 │   ├── config/
 │   ├── context/
 │   ├── hooks/
 │   ├── lib/
 │   ├── pages/
+|   │   ├── admin/
+|   │   ├── auth/
+|   │   ├── customer/
 │   ├── routes/
 │   ├── services/
 │   ├── utils/
-│   └── App.jsx
+│   ├── App.jsx
+│   ├── index.css
+│   └── main.jsx
 ├── public/
+├── .env
+├── tailwind.config.js
+├── vite.config.js
 └── package.json
 ```
 
