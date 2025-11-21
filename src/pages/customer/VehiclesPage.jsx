@@ -108,7 +108,7 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
                         ${isSameDayRange ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                     `}
                 >
-                    Alquilar
+                    Ver más
                 </button>
             </div>
         </div>
