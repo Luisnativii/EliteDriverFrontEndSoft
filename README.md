@@ -4,9 +4,23 @@
 
 Este es el repositorio del frontend de **EliteDrive**, una aplicación web para la reserva y gestión de vehículos. El sistema permite a los usuarios alquilar autos disponibles y a los administradores gestionar el inventario, mantenimiento y reservas de manera centralizada.
 
+---
+
+## Descripción del Proyecto
+
+Es un sistema web para gestionar y reservar vehículos en línea. Los usuarios pueden explorar el catálogo filtrando por características (marca, modelo, transmisión, año, combustible, precio por día, capacidad, tipo de vehículo), ver disponibilidad por rango de fechas y realizar reservas con cálculo automático del precio total según días.
+
+El administrador gestiona el inventario (CRUD de vehículos), la disponibilidad (ocupado por reserva o por mantenimiento), las aseguradoras y un panel con alertas y vehículos alquilados.
+
+**Recursos principales**: vehículo (póliza, aseguradora, contacto de emergencia, kilometraje), reserva, usuario, aseguradora, mantenimiento.  
+**Roles**: Administrador y Cliente.  
+
+---
+
+
 ## Demo
 
-_(Agrega aquí el enlace a la versión desplegada si ya lo has subido a Vercel, Netlify, etc.)_
+https://elite-driver-soft.vercel.app
 
 ---
 
@@ -18,7 +32,16 @@ _(Agrega aquí el enlace a la versión desplegada si ya lo has subido a Vercel, 
 | **Backend**      | Spring Boot (Java)   |
 | **Base de datos**| PostgreSQL           |
 
-📌 Aunque en la propuesta inicial se consideraron Go y MongoDB, en la versión final del proyecto se optó por **Spring Boot** como backend y **PostgreSQL** para persistencia.
+
+---
+
+## Requisitos Previos:
+
+Para ejecutar la aplicación localmente, asegúrate de tener los siguientes requisitos previos:
+
+1. **Node.js** (v16 o superior) instalado.
+2. **npm** (v7 o superior) para la instalación de dependencias.
+3. **Vite** para la construcción y desarrollo de la aplicación.
 
 ---
 
@@ -50,6 +73,13 @@ npm start
 ```
 
 ---
+## Variables de entorno
+Para hacer funcionar la aplicación localmente, asegúrate de configurar correctamente el archivo .env con las siguientes variables:
+```bash
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+Este archivo es fundamental para conectar el frontend con el backend local.
+
 
 ## Usuarios de prueba
 
@@ -139,4 +169,4 @@ elite-drive-frontend/
 
 ## 📜 Licencia
 
-Este proyecto es parte del curso **Programación N Capas - Ciclo 01-25** y se encuentra bajo fines académicos.
+Este proyecto es parte del curso **Ingenieria de software - Ciclo 02-25** y se encuentra bajo fines académicos.
