@@ -2,6 +2,14 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useVehicles, useAuthCheck, useVehicleOperations } from './useVehicles';
 import ReservationService from '@/services/reservationService';
 
+/**
+ * Hook personalizado para gestionar los vehículos, sus reservas, y la creación/edición de vehículos.
+ * Este hook se encarga de proporcionar datos sobre los vehículos, gestionando reservas y permitiendo
+ * operaciones de administración de vehículos (como crear, editar y actualizar el estado de los vehículos).
+ *
+ * @returns {Object} - Retorna un objeto con la lógica para gestionar vehículos, filtros y reservaciones.
+ */
+
 export const useVehicleManagement = () => {
     // Hooks externos
     const { vehicles, loading, error, refetch } = useVehicles();

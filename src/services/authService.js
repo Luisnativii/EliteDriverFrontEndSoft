@@ -41,6 +41,12 @@ authApi.interceptors.response.use(
   }
 );
 
+/**
+ * Función para iniciar sesión de usuario
+ * @param {Object} credentials - Datos de autenticación del usuario (email, contraseña)
+ * @returns {Object} Datos del usuario y token de autenticación
+ */
+
 export const login = async (credentials) => {
   try {
     const response = await authApi.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
@@ -71,6 +77,12 @@ export const login = async (credentials) => {
     }
   }
 };
+
+/**
+ * Función para registrar un nuevo usuario
+ * @param {Object} userData - Datos del usuario para el registro
+ * @returns {Object} Respuesta de la API con los datos del usuario registrado
+ */
 
 export const register = async (userData) => {
   try {
@@ -132,20 +144,38 @@ export const register = async (userData) => {
   }
 };
 
+/**
+ * Función para cerrar sesión
+ */
+
 export const logout = () => {
   localStorage.removeItem('authToken');
   localStorage.removeItem('userData');
   window.location.href = '/'; //redirigir al homepage en vez del login
 };
 
+/**
+ * Función para obtener los datos del usuario actual desde el localStorage
+ * @returns {Object|null} Datos del usuario si está autenticado, null si no
+ */
+
 export const getCurrentUser = () => {
   const userData = localStorage.getItem('userData');
   return userData ? JSON.parse(userData) : null;
 };
 
+/**
+ * Función para verificar si el usuario está autenticado
+ * @returns {boolean} True si el usuario está autenticado, false si no
+ */
 export const isAuthenticated = () => {
   return !!localStorage.getItem('authToken');
 };
+
+/**
+ * Función para validar el token de autenticación
+ * @returns {boolean} True si el token es válido, false si no
+ */
 
 export const validateToken = async () => {
   try {

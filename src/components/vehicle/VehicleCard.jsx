@@ -17,12 +17,29 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
+/**
+ * Componente de tarjeta de vehículo.
+ * Muestra la información de un vehículo con opciones para editar, eliminar o ver detalles.
+ * 
+ * @param {Object} vehicle - Datos del vehículo a mostrar.
+ * @param {function} onEdit - Función para editar el vehículo.
+ * @param {function} onRefresh - Función para refrescar la lista de vehículos después de una acción (por ejemplo, eliminación).
+ * @param {boolean} isAdmin - Indicador de si el usuario tiene permisos de administrador para realizar acciones como editar o eliminar.
+ */
+
 const VehicleCard = ({ vehicle, onEdit, onRefresh, isAdmin = false }) => {
   const { deleteVehicle } = useVehicleOperations();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  /**
+   * Convierte una imagen base64 a un enlace de imagen válido.
+   *
+   * @param {string} base64 - La imagen en formato base64.
+   * @returns {string|null} - Enlace de imagen en formato base64 o null si no hay imagen.
+   */
 
   const getBase64ImageSrc = (base64) => {
     if (!base64) return null;
@@ -77,6 +94,12 @@ const VehicleCard = ({ vehicle, onEdit, onRefresh, isAdmin = false }) => {
     setShowDeleteConfirm(false);
   };
 
+  /**
+   * Formatea el precio del vehículo a formato de moneda USD.
+   *
+   * @param {number} price - Precio del vehículo.
+   * @returns {string} - Precio formateado como moneda en USD.
+   */
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-US', {
       style: 'currency',
@@ -86,9 +109,23 @@ const VehicleCard = ({ vehicle, onEdit, onRefresh, isAdmin = false }) => {
     }).format(price);
   };
 
+  /**
+   * Formatea los kilómetros recorridos por el vehículo con separadores de miles.
+   *
+   * @param {number} km - Kilómetros del vehículo.
+   * @returns {string} - Kilómetros formateados con separadores de miles.
+   */
+
   const formatKilometers = (km) => {
     return new Intl.NumberFormat('es-US').format(km);
   };
+
+  /**
+   * Obtiene la configuración del estado del vehículo para mostrar en la tarjeta.
+   *
+   * @param {string} status - El estado actual del vehículo (por ejemplo, 'available', 'reserved').
+   * @returns {Object} - Configuración del estado con texto, clase de estilo y icono correspondiente.
+   */
 
   const getStatusConfig = (status) => {
     switch (status) {

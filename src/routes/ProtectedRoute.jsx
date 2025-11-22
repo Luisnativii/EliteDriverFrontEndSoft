@@ -1,6 +1,16 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
+/**
+ * Componente de ruta protegida que asegura que solo los usuarios autenticados 
+ * y con el rol adecuado puedan acceder a ciertas rutas. Si el usuario no está 
+ * autenticado o no tiene el rol necesario, será redirigido a otra página.
+ *
+ * @param {ReactNode} children - Los elementos que se renderizan si el usuario está autenticado y tiene el rol necesario.
+ * @param {string} requiredRole - Rol necesario para acceder a la ruta. Puede ser "admin", "customer", etc.
+ * @returns {ReactNode} Redirige o renderiza el contenido protegido según la autenticación y el rol.
+ */
+
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
 

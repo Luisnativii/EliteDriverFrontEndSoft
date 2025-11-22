@@ -7,6 +7,16 @@ import VehicleFilterForm from '../../components/forms/VehicleFilterForm';
 import LoadingSpinner from '../../components/layout/LoadingSpinner';
 import { Plus, Search, AlertCircle, Wrench, Car, Calendar } from 'lucide-react';
 
+/**
+ * Página de gestión de vehículos.
+ * Este componente permite a los administradores gestionar la flota de vehículos,
+ * incluyendo la adición, edición y visualización de vehículos, así como el filtrado y
+ * búsqueda de vehículos según varios criterios.
+ * 
+ * Los administradores tienen la capacidad de modificar el estado de los vehículos y agregar nuevos
+ * vehículos a la flota. Los usuarios no administradores solo pueden ver los vehículos disponibles.
+ */
+
 const VehicleManagementPage = () => {
   const {
     // Estados y datos

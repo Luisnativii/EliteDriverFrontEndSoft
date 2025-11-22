@@ -4,6 +4,16 @@ import React from 'react';
 import { useVehicleForm } from '../../hooks/useVehicleForm';
 import { toast } from 'react-toastify';
 
+/**
+ * Formulario para editar un vehículo.
+ * Permite actualizar la información del vehículo en el sistema.
+ *
+ * @param {Object} vehicle - El objeto del vehículo a editar.
+ * @param {function} onSubmit - Función que se ejecuta cuando el formulario es enviado.
+ * @param {function} onCancel - Función que se ejecuta cuando el formulario es cancelado.
+ * @param {boolean} submitLoading - Indicador de si el formulario está siendo procesado.
+ */
+
 const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false }) => {
   const {
     formData,
@@ -20,6 +30,12 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
   const MAX_SIZE_MB = 5;
   const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
+  /**
+   * Valida el archivo de imagen para asegurar que sea PNG o JPEG y no exceda el tamaño máximo permitido.
+   *
+   * @param {File} file - Archivo de imagen a validar.
+   * @returns {boolean} - Retorna `true` si el archivo es válido, de lo contrario, `false`.
+   */
   const validateImageFile = (file) => {
     // Validar tipo de archivo de forma estricta
     const validMimeTypes = ['image/jpeg', 'image/png'];
@@ -97,6 +113,13 @@ const EditVehicleForm = ({ vehicle, onSubmit, onCancel, submitLoading = false })
       setCurrentImage(currentImage - 1);
     }
   };
+
+  /**
+   * Convierte un archivo en formato base64.
+   *
+   * @param {File} file - El archivo a convertir.
+   * @returns {Promise} - Una promesa que resuelve con el valor base64 del archivo.
+   */
 
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {

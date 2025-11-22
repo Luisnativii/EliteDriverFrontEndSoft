@@ -1,4 +1,16 @@
 // Hook para obtener tipos de vehículos
+
+/**
+ * Hook personalizado para obtener los tipos de vehículos desde la API.
+ * Este hook maneja el estado de carga, error y los datos de los tipos de vehículos.
+ * 
+ * @returns {Object} - El hook devuelve un objeto con los siguientes valores:
+ *    - carTypes: Un array de tipos de vehículos obtenidos de la API (o por defecto).
+ *    - loading: Un estado booleano que indica si la solicitud está en curso.
+ *    - error: Un mensaje de error si la solicitud falla, o null si no hay error.
+ *    - refetch: Una función para volver a realizar la solicitud de los tipos de vehículos.
+ */
+
 export const useCarTypes = () => {
   const [carTypes, setCarTypes] = useState([]);
   const [loading, setLoading] = useState(true);

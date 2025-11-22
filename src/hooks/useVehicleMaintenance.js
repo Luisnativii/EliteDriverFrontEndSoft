@@ -1,6 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useVehicles, useAuthCheck, useVehicleOperations } from './useVehicles';
 
+/**
+ * Hook personalizado para gestionar las operaciones de mantenimiento de vehículos.
+ * Este hook permite filtrar, agrupar, actualizar el estado y manejar las acciones de los vehículos
+ * (como la actualización de su estado a través de drag-and-drop).
+ * 
+ * @returns {Object} - Retorna un objeto con la lógica para gestionar las operaciones de mantenimiento de vehículos.
+ */
+
 export const useVehicleMaintenance = () => {
   // Hooks externos
   const { vehicles, loading, error, refetch } = useVehicles();

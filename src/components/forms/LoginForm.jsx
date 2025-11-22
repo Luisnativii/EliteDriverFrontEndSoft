@@ -4,6 +4,13 @@ import { login } from "../../services/authService";
 import { useAuth } from "../../hooks/useAuth";
 import { useLocation, useNavigate } from 'react-router-dom';
 
+/**
+ * Componente de formulario de inicio de sesión.
+ * Permite al usuario ingresar sus credenciales para acceder al sistema.
+ * 
+ * @param {function} onRegisterClick - Función que se ejecuta cuando el usuario hace clic en "Crear nueva cuenta".
+ */
+
 const LoginForm = ({ onRegisterClick }) => {
   const { login: loginContext } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -12,22 +19,35 @@ const LoginForm = ({ onRegisterClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+   /**
+   * Maneja el cambio de los campos del formulario (correo y contraseña).
+   * Borra el mensaje de error cuando el usuario empieza a escribir.
+   *
+   * @param {Event} e - El evento del cambio en los campos del formulario.
+   */
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     // Clear error when user starts typing
     if (error) setError('');
   };
 
+  /**
+   * Maneja el envío del formulario de inicio de sesión.
+   * Realiza la autenticación en el servidor y actualiza el contexto si el login es exitoso.
+   *
+   * @param {Event} e - El evento de envío del formulario.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      // Step 1: Authenticate with server via authService
+      // Paso 1: Autenticarse con el servidor usando el servicio authService
       const authData = await login(form);
 
-      // Step 2: Update context with the authenticated user data
+      // Paso 2: Actualizar el contexto con los datos del usuario autenticado
       const contextResult = await loginContext(authData);
 
       if (contextResult.success) {

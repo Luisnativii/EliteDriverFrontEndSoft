@@ -14,6 +14,13 @@ import StatusColumn from '../../components/admin/StatusColumn';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import MaintenanceHistoryWindow from '../../components/vehicle/MaintenanceHistoryModal';
 
+/**
+ * Página de gestión de mantenimiento de vehículos.
+ * Permite a los administradores gestionar el estado de mantenimiento de los vehículos mediante un sistema de columnas tipo "Kanban".
+ * Los usuarios con rol de administrador pueden realizar cambios en el estado de los vehículos, como ponerlos en mantenimiento o marcarlos como fuera de servicio.
+ * Además, proporciona filtros y una vista para ver el historial de mantenimiento de cada vehículo.
+ */
+
 const MaintenancePage = () => {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   
@@ -51,6 +58,7 @@ const MaintenancePage = () => {
     dragOverColumn
   } = useVehicleMaintenance();
 
+  // Función para manejar la visualización del historial de mantenimiento de un vehículo
   const handleViewHistory = (vehicle) => {
     setSelectedVehicle(vehicle);
   };
