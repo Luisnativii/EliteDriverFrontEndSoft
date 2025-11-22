@@ -3,6 +3,14 @@ import { useAuth } from './useAuth';
 import { vehicleService } from '../services/vehicleService';
 import { reservationService } from '../services/reservationService';
 
+/**
+ * Hook personalizado para obtener los datos del dashboard.
+ * Este hook maneja la carga de datos relacionados con las reservas, vehículos,
+ * ingresos, mantenimiento y actividad reciente del sistema.
+ * 
+ * @returns {Object} - Retorna un objeto con el estado de carga, error, datos del dashboard y función para refrescar los datos.
+ */
+
 export const useDashboard = () => {
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   
@@ -43,7 +51,13 @@ export const useDashboard = () => {
 
   const hasAdminRole = user?.role === 'admin';
 
-  // Función para obtener datos de reservas
+  /**
+   * Función para obtener los datos de reservas.
+   * Filtra y clasifica las reservas por su estado (activo, próximo, completado) y genera las tendencias semanales.
+   * 
+   * @returns {Object} - Datos de las reservas, incluyendo total, activo, próximo, completado y tendencias semanales.
+   */
+
   const fetchReservationsData = useCallback(async () => {
     try {
       const reservations = await reservationService.getAllReservations();
@@ -109,7 +123,12 @@ export const useDashboard = () => {
     }
   }, []);
 
-  // Función para obtener datos de vehículos
+  /**
+   * Función para obtener los datos de vehículos.
+   * Clasifica los vehículos por su estado (disponible, reservado, en mantenimiento, fuera de servicio).
+   * 
+   * @returns {Object} - Datos de los vehículos, incluyendo total, disponible, reservado, mantenimiento, fuera de servicio y desglose por tipo.
+   */
   const fetchVehiclesData = useCallback(async () => {
     try {
       const vehicles = await vehicleService.getAllVehicles();
@@ -188,7 +207,12 @@ export const useDashboard = () => {
     }
   }, []);
 
-  // Función para obtener datos de ingresos
+  /**
+   * Función para obtener los datos de ingresos.
+   * Calcula los ingresos generados por las reservas completadas en diferentes períodos de tiempo (hoy, semana, mes, año).
+   * 
+   * @returns {Object} - Datos de los ingresos generados, incluyendo los ingresos de hoy, semana, mes, año y una tendencia semanal.
+   */
   const fetchRevenueData = useCallback(async () => {
     try {
       const reservations = await reservationService.getAllReservations();
@@ -265,7 +289,13 @@ export const useDashboard = () => {
     }
   }, []);
 
-  // Función para obtener datos de mantenimiento
+  /**
+   * Función para obtener los datos de mantenimiento de los vehículos.
+   * Filtra los vehículos según su estado de mantenimiento (requiere atención, en mantenimiento, fuera de servicio).
+   * 
+   * @returns {Object} - Datos de los vehículos que requieren atención, en mantenimiento y fuera de servicio, junto con las alertas.
+   */
+
   const fetchMaintenanceData = useCallback(async () => {
     try {
       const vehicles = await vehicleService.getAllVehicles();
@@ -327,7 +357,13 @@ export const useDashboard = () => {
     }
   }, []);
 
-  // Función para obtener actividad reciente
+  /**
+   * Función para obtener la actividad reciente del sistema.
+   * Recupera las últimas reservas y las clasifica para mostrar como actividad reciente.
+   * 
+   * @returns {Array} - Lista de actividades recientes.
+   */
+  
   const fetchRecentActivity = useCallback(async () => {
     try {
       const reservations = await reservationService.getAllReservations();

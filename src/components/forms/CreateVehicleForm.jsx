@@ -4,7 +4,17 @@ import React from 'react';
 import { useVehicleForm } from '../../hooks/useVehicleForm';
 import { toast } from 'react-toastify';
 
+/**
+ * Formulario para crear un vehículo.
+ * Este formulario permite ingresar todos los datos necesarios para registrar un nuevo vehículo en el sistema, incluyendo imágenes y características.
+ *
+ * @param {function} onSubmit - Función que se ejecuta cuando el formulario es enviado.
+ * @param {function} onCancel - Función que se ejecuta cuando el formulario es cancelado.
+ * @param {boolean} submitLoading - Indicador de si el formulario está siendo procesado.
+ */
+
 const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
+  // Hook personalizado para manejar el estado y la validación del formulario.
   const {
     formData,
     errors,
@@ -14,17 +24,26 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
     setErrors
   } = useVehicleForm({}, false); // false = modo creación
 
+  // Tipos de vehículos disponibles para seleccionar en el formulario.
   const vehicleTypes = [
     'Sedan',
     'SUV',
     'PickUp',
   ];
 
+  // Estado para manejar la imagen principal y las secundarias del vehículo.
   const [currentImage, setCurrentImage] = React.useState(0);
   const [mainImageFile, setMainImageFile] = React.useState(null);
   const [secondaryImageFiles, setSecondaryImageFiles] = React.useState([]);
-  const MAX_SIZE_MB = 5;
-  const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+  const MAX_SIZE_MB = 5; // Tamaño máximo permitido para las imágenes en MB.
+  const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024; // Tamaño máximo en bytes.
+
+  /**
+   * Valida el archivo de imagen para asegurar que sea PNG o JPEG y no exceda el tamaño máximo permitido.
+   *
+   * @param {File} file - Archivo de imagen a validar.
+   * @returns {boolean} - Retorna `true` si el archivo es válido, de lo contrario, `false`.
+   */
 
   const validateImageFile = (file) => {
     // Validar tipo de archivo de forma estricta
@@ -54,6 +73,13 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
     return true;
   };
 
+  /**
+   * Convierte un archivo en formato base64.
+   *
+   * @param {File} file - El archivo a convertir.
+   * @returns {Promise} - Una promesa que resuelve con el valor base64 del archivo.
+   */
+
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -64,6 +90,13 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
       };
       reader.onerror = reject;
     });
+
+  /**
+   * Maneja el cambio de la imagen principal.
+   * Valida el archivo de imagen, lo convierte a base64 y actualiza el estado del formulario.
+   *
+   * @param {Event} e - Evento del cambio de archivo.
+   */
 
   const handleMainImageChange = async (e) => {
     const file = e.target.files?.[0];
@@ -127,6 +160,8 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
     }
   };
 
+  // Lista de todas las imágenes, combinando la principal y las secundarias.
+
   const allImages = [
     formData.mainImageBase64,
     ...(formData.listImagesBase64 || [])
@@ -143,6 +178,13 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
         prev === 0 ? allImages.length - 1 : prev - 1
       );
   };
+
+  /**
+   * Elimina una imagen seleccionada, ya sea la principal o una secundaria.
+   * Ajusta el índice de la imagen mostrada si es necesario.
+   *
+   * @param {number} index - Índice de la imagen a eliminar.
+   */
 
   const removeImage = (index) => {
     if (index === 0) {
@@ -177,6 +219,12 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
     }
   };
 
+  /**
+   * Maneja el cambio de las características del vehículo.
+   * Actualiza el estado de las características y limpia los errores si es necesario.
+   *
+   * @param {Event} e - Evento del cambio de texto.
+   */
   const handleFeaturesChange = (e) => {
     const value = e.target.value || '';
 

@@ -2,6 +2,13 @@
 import React, { useState } from 'react';
 import { useRegister } from '../../hooks/useRegister';
 
+/**
+ * Componente del formulario de registro de usuario.
+ * Permite al usuario crear una nueva cuenta proporcionando su información personal y credenciales.
+ * 
+ * @param {function} onLoginClick - Función que se ejecuta cuando el usuario hace clic en "Ya tengo una cuenta" para redirigir al login.
+ */
+
 const RegisterForm = ({ onLoginClick }) => {
   const {
     formData,
@@ -25,7 +32,13 @@ const RegisterForm = ({ onLoginClick }) => {
    const minBirthDate = '1900-01-01';
 
 
-  // Función para manejar el éxito del registro
+  /**
+   * Función para manejar el éxito del registro.
+   * Muestra un mensaje de éxito por unos segundos y luego redirige al login.
+   *
+   * @param {Object} response - Respuesta del servicio de registro.
+   */
+
   const handleRegistrationSuccess = (response) => {
     setRegistrationSuccess(true);
 
@@ -39,7 +52,13 @@ const RegisterForm = ({ onLoginClick }) => {
     }, 3000);
   };
 
-  // Función para manejar el submit del formulario
+  /**
+   * Función que maneja el envío del formulario de registro.
+   * Llama al hook de `handleSubmit` para ejecutar la lógica de validación y registro.
+   *
+   * @param {Event} e - Evento de envío del formulario.
+   */
+  
   const onSubmit = (e) => {
     handleSubmit(e, handleRegistrationSuccess);
   };

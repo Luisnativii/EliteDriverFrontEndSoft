@@ -2,6 +2,14 @@
 import { useState } from 'react';
 import { register } from '../services/authService';
 
+/**
+ * Hook personalizado para gestionar el formulario de registro de un usuario.
+ * Este hook maneja el estado del formulario, las validaciones, el envío de datos a la API
+ * y el manejo de errores durante el proceso de registro.
+ * 
+ * @returns {Object} - Retorna un objeto con los datos del formulario, los errores, el estado de carga, las funciones para manejar el formulario y la validación.
+ */
+
 export const useRegister = () => {
     const [formData, setFormData] = useState({
         firstName: '',
@@ -17,6 +25,13 @@ export const useRegister = () => {
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
 
+    /**
+     * Función para manejar los cambios en los campos del formulario.
+     * Se encarga de actualizar el estado del formulario y manejar formateos especiales
+     * para campos como el DUI y el número de teléfono.
+     * 
+     * @param {Event} e - El evento de cambio del formulario.
+     */
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -133,7 +148,13 @@ export const useRegister = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Función para formatear datos antes de enviar a la API
+    /**
+     * Función para formatear los datos antes de enviarlos a la API.
+     * Ajusta el formato del DUI y teléfono para que coincidan con lo esperado por el servidor.
+     * 
+     * @param {Object} data - Datos del formulario que se enviarán a la API.
+     * @returns {Object} - Datos formateados correctamente para la API.
+     */
     const formatDataForAPI = (data) => {
         return {
             firstName: data.firstName.trim(),

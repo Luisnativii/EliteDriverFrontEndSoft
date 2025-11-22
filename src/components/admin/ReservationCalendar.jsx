@@ -11,6 +11,7 @@ const locales = {
     es: es,
 };
 
+// Configuración del localizador para la fecha (usando date-fns)
 const localizer = dateFnsLocalizer({
     format: (date, formatStr, culture, options) =>
         format(date, formatStr, { ...options, locale: es }),
@@ -20,6 +21,11 @@ const localizer = dateFnsLocalizer({
     getDay,
     locales: { es },
 });
+
+/**
+ * Componente del calendario de reservas.
+ * Muestra un calendario interactivo con las reservas del vehículo, con funcionalidad para ver detalles y navegar por fechas.
+ */
 
 
 const ReservationCalendar = () => {
@@ -62,6 +68,11 @@ const ReservationCalendar = () => {
             };
         });
     }, [reservations]);
+
+    /**
+     * Componente personalizado para los eventos en el calendario.
+     * Muestra cada evento con su estilo y un ícono basado en su estado (activo, completado o próximo).
+     */
 
     const EventComponent = ({ event }) => {
         const getEventStyles = (status) => {

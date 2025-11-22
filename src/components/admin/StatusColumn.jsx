@@ -7,6 +7,24 @@ import {
   XCircle
 } from 'lucide-react';
 
+/**
+ * Componente de columna de estado para mostrar y gestionar vehículos en diferentes estados.
+ * Permite arrastrar y soltar vehículos entre estados, con visualización de información relacionada.
+ * 
+ * @param {string} status - El estado actual de la columna (p.ej., "maintenance", "completed").
+ * @param {Object} config - Configuración de la columna, incluyendo título, icono, colores, etc.
+ * @param {Array} vehicles - Lista de vehículos asociados a este estado.
+ * @param {number} count - Número de vehículos en este estado.
+ * @param {function} onDragOver - Función para manejar el evento de arrastre sobre la columna.
+ * @param {function} onDragLeave - Función para manejar el evento de salida de arrastre.
+ * @param {function} onDrop - Función para manejar el evento de soltar el vehículo en la columna.
+ * @param {string} dragOverColumn - Estado de la columna que está siendo arrastrada sobre ella.
+ * @param {Object} draggedVehicle - El vehículo actualmente arrastrado.
+ * @param {function} onDragStart - Función que se ejecuta cuando el usuario comienza a arrastrar un vehículo.
+ * @param {function} onDragEnd - Función que se ejecuta cuando el usuario termina de arrastrar un vehículo.
+ * @param {function} onViewHistory - Función para ver el historial de un vehículo.
+ */
+
 const StatusColumn = ({ 
   status, 
   config, 

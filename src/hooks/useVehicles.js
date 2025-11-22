@@ -11,7 +11,14 @@ import {
   hasAdminRole
 } from '../services/vehicleService';
 
-// Hook principal para obtener todos los vehículos
+/**
+ * Hook para gestionar vehículos.
+ * Permite obtener todos los vehículos, obtener un vehículo específico por ID,
+ * crear, actualizar y eliminar vehículos, así como verificar si el usuario está autenticado y tiene permisos de administrador.
+ * 
+ * @returns {Object} - Datos y funciones para gestionar los vehículos.
+ */
+
 export const useVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +51,12 @@ export const useVehicles = () => {
   };
 };
 
-// Hook para obtener un vehículo específico por ID
+/**
+ * Hook para obtener un vehículo específico por su ID.
+ * 
+ * @param {string} id - ID del vehículo a obtener.
+ * @returns {Object} - Datos y funciones para obtener un vehículo específico.
+ */
 export const useVehicle = (id) => {
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +94,11 @@ export const useVehicle = (id) => {
   };
 };
 
-// Hook para verificar autenticación y permisos
+/**
+ * Hook para verificar la autenticación y los permisos del usuario.
+ * 
+ * @returns {Object} - Estado de autenticación y permisos del usuario.
+ */
 export const useAuthCheck = () => {
   const [authStatus, setAuthStatus] = useState({
     isAuthenticated: false,
@@ -111,7 +127,11 @@ export const useAuthCheck = () => {
   return authStatus;
 };
 
-// Hook para operaciones CRUD de vehículos
+/**
+ * Hook para realizar operaciones CRUD sobre los vehículos (crear, actualizar, eliminar).
+ * 
+ * @returns {Object} - Funciones y estados relacionados con las operaciones CRUD de los vehículos.
+ */
 export const useVehicleOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
