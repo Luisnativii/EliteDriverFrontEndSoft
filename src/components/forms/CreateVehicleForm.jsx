@@ -201,6 +201,16 @@ const CreateVehicleForm = ({ onSubmit, onCancel, submitLoading = false }) => {
 
     if (!validateForm()) return;
 
+    // Validar que insurancePhone no esté vacío
+    if (!formData.insurancePhone || !formData.insurancePhone.trim()) {
+      setErrors(prev => ({
+        ...prev,
+        insurancePhone: 'El número telefónico de la aseguradora es requerido'
+      }));
+      toast.error('Por favor completa todos los campos requeridos');
+      return;
+    }
+
     const processedData = {
       name: formData.name.trim(),
       brand: formData.brand.trim(),
