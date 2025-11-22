@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVehicles } from '../../hooks/useVehicles';
 import { useDateContext } from '../../context/DateContext';
@@ -7,27 +7,24 @@ import ReservationService from '../../services/reservationService';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
 import {
-    DollarSignIcon, HandCoinsIcon,
-    LocationEdit,
+    DollarSignIcon,
+    HandCoinsIcon,
     MapPin,
-    UsersIcon
+    UsersIcon,
+    Calendar,
+    AlertCircle
 } from "lucide-react";
-
-
 
 const formatDateISO = (date) => new Date(date).toISOString().split('T')[0];
 
 // Componente para cada tarjeta de vehículo
-const VehicleCard = ({ vehicle, isFiltered = false }) => {
+const VehicleCard = ({ vehicle, isFiltered = false, isReserved = false }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { startDate, endDate } = useDateContext();
 
     // Validar si el rango es de un solo día
-    const isSameDayRange =
-        startDate &&
-        endDate &&
-        startDate === endDate;
+    const isSameDayRange = startDate && endDate && startDate === endDate;
 
     const proceedReservation = () => {
         if (!user) {
@@ -54,8 +51,13 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
         return `data:${mimeType};base64,${clean}`;
     };
 
-
     const handleReservationClick = () => {
+        // Bloquear si está reservado
+        if (isReserved) {
+            toast.error('Este vehículo está reservado para las fechas seleccionadas.');
+            return;
+        }
+
         // Bloquear si la fecha de inicio y fin son iguales
         if (isSameDayRange) {
             toast.error('No se puede alquilar con la misma fecha de inicio y fin.');
@@ -66,49 +68,82 @@ const VehicleCard = ({ vehicle, isFiltered = false }) => {
     };
 
     // Calcular precio si hay fechas seleccionadas
-    const calculation = startDate && endDate
+    const calculation = startDate && endDate && !isSameDayRange
         ? ReservationService.calculateTotalPrice(startDate, endDate, vehicle.price)
         : null;
 
     return (
-        <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/15 ${isFiltered ? 'ring-2 ring-white/30' : ''}`}>
+        <div className={`bg-white/10 backdrop-blur-md border rounded-2xl p-4 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/15 relative
+            ${isFiltered ? 'ring-2 ring-white/30' : ''}
+            ${isReserved ? 'border-orange-400/50 bg-orange-500/10' : 'border-white/20'}
+        `}>
+            {/* Badge de reservado */}
+            {isReserved && (
+                <div className="absolute top-2 right-2 bg-orange-500/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg z-10">
+                    <Calendar className="w-3 h-3" />
+                    Reservado
+                </div>
+            )}
+
             {/* IMAGEN BASE64 */}
-            <div className="w-full h-40 bg-gray-200 rounded-lg mb-4 overflow-hidden">
+            <div className={`w-full h-40 bg-gray-200 rounded-lg mb-4 overflow-hidden relative ${isReserved ? 'opacity-75' : ''}`}>
                 <img
                     src={getBase64ImageSrc(vehicle.mainImageBase64)}
                     alt={vehicle.name}
                     className="w-full h-full object-cover"
                     onError={(e) => e.target.src = "/images/vehicle-placeholder.jpg"}
                 />
+                {isReserved && (
+                    <div className="absolute inset-0 bg-orange-500/20 backdrop-blur-[1px] flex items-center justify-center">
+                        <div className="bg-orange-500/90 text-white px-4 py-2 rounded-lg font-semibold">
+                            No Disponible
+                        </div>
+                    </div>
+                )}
             </div>
+
             <h3 className="text-lg font-bold text-white">{vehicle.name}</h3>
             <p className="text-white/70">{vehicle.type}</p>
-            <div className="flex flex-col w-full ">
 
-                <div className={"grid grid-cols-2 mb-2 gap-4"}>
-
-                    <p className={"flex gap-1"}><UsersIcon/> {vehicle.capacity}
-                        <span className={"text-white/70"}>personas</span></p>
-                    <p className="flex gap-1"> <MapPin/> {vehicle.kilometers} km</p>
-                    <p className="flex gap-1"> <HandCoinsIcon/><span
-                        className={"font-bold"}>${vehicle.pricePerDay}</span> / dia</p>
+            <div className="flex flex-col w-full">
+                <div className="grid grid-cols-2 mb-2 gap-4">
+                    <p className="flex gap-1 text-white/90">
+                        <UsersIcon className="w-5 h-5"/> {vehicle.capacity}
+                        <span className="text-white/70">personas</span>
+                    </p>
+                    <p className="flex gap-1 text-white/90">
+                        <MapPin className="w-5 h-5"/> {vehicle.kilometers} km
+                    </p>
+                    <p className="flex gap-1 text-white/90">
+                        <HandCoinsIcon className="w-5 h-5"/>
+                        <span className="font-bold">${vehicle.pricePerDay}</span> / día
+                    </p>
                     {calculation && calculation.days > 0 && (
-                        <p className={"flex gap-1"}><DollarSignIcon/><span
-                            className={"font-bold"}>${calculation.totalPrice}</span> /<span className={"text-white/70"}>{calculation.days} dia{calculation.days>1?'s':" "}</span> </p>
+                        <p className="flex gap-1 text-white/90">
+                            <DollarSignIcon className="w-5 h-5"/>
+                            <span className="font-bold">${calculation.totalPrice}</span> /
+                            <span className="text-white/70">
+                                {calculation.days} día{calculation.days > 1 ? 's' : ''}
+                            </span>
+                        </p>
                     )}
                 </div>
-
             </div>
-            <div className="w-full my-2">
 
+            <div className="w-full my-2">
                 <button
                     onClick={handleReservationClick}
-                    className={`w-full bg-gradient-to-r from-black to-neutral-900 text-white px-4 py-2 rounded-full transition-all duration-300 shadow-md
-                        hover:from-neutral-600 hover:to-neutral-800
-                        ${isSameDayRange ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                    disabled={isReserved}
+                    className={`w-full px-4 py-2 rounded-full transition-all duration-300 shadow-md font-semibold
+                        ${isReserved
+                        ? 'bg-gray-500 text-gray-300 cursor-not-allowed opacity-60'
+                        : isSameDayRange
+                            ? 'bg-gradient-to-r from-black to-neutral-900 text-white opacity-60 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-black to-neutral-900 text-white hover:from-neutral-600 hover:to-neutral-800 cursor-pointer'
+                    }
                     `}
                 >
-                    Ver más
+                    {isReserved ? 'No Disponible' : 'Ver más'}
                 </button>
             </div>
         </div>
@@ -119,10 +154,88 @@ const VehiclesPage = () => {
     const { vehicles, loading, error } = useVehicles();
     const { startDate, endDate } = useDateContext();
     const [filteredType, setFilteredType] = useState('all');
-    const [busyVehicleIds, setBusyVehicleIds] = useState([]);
+
+    // Estados para reservaciones (igual que useVehicleManagement)
+    const [reservations, setReservations] = useState([]);
+    const [reservationsLoading, setReservationsLoading] = useState(false);
 
     // Definir si hay filtros de fecha activos
     const hasDateFilter = startDate && endDate;
+
+    // Obtener TODAS las reservaciones una sola vez (igual que useVehicleManagement)
+    useEffect(() => {
+        const fetchAllReservations = async () => {
+            try {
+                setReservationsLoading(true);
+
+                // Usar getAllReservations igual que en useVehicleManagement
+                const reservationsData = await ReservationService.getAllReservations();
+
+                // Transformar datos igual que en useVehicleManagement
+                const transformedReservations = reservationsData.map(reservation => ({
+                    id: reservation.id,
+                    startDate: reservation.startDate,
+                    endDate: reservation.endDate,
+                    status: reservation.status || 'active',
+                    vehicle: {
+                        id: reservation.vehicle?.id || reservation.vehicleId,
+                        name: reservation.vehicle?.name || 'Vehículo no disponible',
+                    }
+                }));
+
+                setReservations(transformedReservations);
+
+            } catch (err) {
+                console.error('❌ Error al cargar reservas:', err);
+                setReservations([]);
+            } finally {
+                setReservationsLoading(false);
+            }
+        };
+
+        fetchAllReservations();
+    }, []);
+
+    // Filtrar reservas por el rango de fechas (igual que useVehicleManagement)
+    const reservationsInDateRange = useMemo(() => {
+        if (!startDate || !endDate || reservations.length === 0) {
+            return [];
+        }
+
+        const fromDate = new Date(startDate);
+        const toDate = new Date(endDate);
+
+        // Establecer horas para comparación correcta
+        fromDate.setHours(0, 0, 0, 0);
+        toDate.setHours(23, 59, 59, 999);
+
+        const filteredReservations = reservations.filter(reservation => {
+            // Solo considerar reservas activas/confirmadas
+            if (reservation.status?.toLowerCase() !== 'active' &&
+                reservation.status?.toLowerCase() !== 'confirmado') {
+                return false;
+            }
+
+            const resStartDate = new Date(reservation.startDate);
+            const resEndDate = new Date(reservation.endDate);
+
+            // La reserva está activa en el rango si:
+            // - Su fecha de inicio es <= toDate Y su fecha de fin es >= fromDate
+            return resStartDate <= toDate && resEndDate >= fromDate;
+        });
+
+        return filteredReservations;
+    }, [reservations, startDate, endDate]);
+
+    // Obtener IDs de vehículos reservados (igual que useVehicleManagement)
+    const reservedVehicleIds = useMemo(() => {
+        const ids = reservationsInDateRange
+            .map(reservation => reservation.vehicle.id)
+            .filter(Boolean);
+
+        // Eliminar duplicados
+        return [...new Set(ids)];
+    }, [reservationsInDateRange]);
 
     // Filtrar vehículos disponibles
     let filteredVehicles = vehicles.filter(vehicle => {
@@ -133,59 +246,22 @@ const VehiclesPage = () => {
         // Filtrar por tipo si no es 'all'
         const typeMatch = filteredType === 'all' || vehicle.type === filteredType;
 
-        // No mostrar vehículos ocupados si hay fechas seleccionadas
-        const isNotBusy = !hasDateFilter || !busyVehicleIds.includes(vehicle.id);
-
-        return isMaintenanceCompleted && typeMatch && isNotBusy;
+        return isMaintenanceCompleted && typeMatch;
     });
 
-
-    useEffect(() => {
-        if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-
-
-            // Validar que la fecha de inicio sea antes o igual a la de fin
-            if (start > end) {
-                console.warn('❗Fechas inválidas: inicio después del fin');
-                return;
-            }
-
-
-
-
-            const formatDate = (d) => {
-                const date = new Date(d);
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}-${month}-${year}`; // formato esperado por el backend
-            };
-
-            ReservationService.getReservationsByDateRange(formatDate(startDate), formatDate(endDate))
-                .then(reservations => {
-                    const busyIds = reservations.map(r => r.vehicle.id);
-                    setBusyVehicleIds(busyIds);
-                })
-                .catch(console.error);
-        } else {
-            // Si no hay fechas seleccionadas, limpiar la lista de vehículos ocupados
-            setBusyVehicleIds([]);
-        }
-    }, [startDate, endDate]);
-
-
-
-
+    // Separar vehículos disponibles y reservados
+    const availableVehicles = filteredVehicles.filter(v => !reservedVehicleIds.includes(v.id));
+    const reservedVehicles = filteredVehicles.filter(v => reservedVehicleIds.includes(v.id));
 
     // Manejo de estados de carga y error
-    if (loading) {
+    if (loading || reservationsLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 px-6 py-25 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-800 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Cargando vehículos...</p>
+            <div className="min-h-screen bg-gradient-to-br from-neutral-800 via-neutral-900 to-black px-6 py-25 flex items-center justify-center">
+                <div className="text-center bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                    <p className="text-white">
+                        {reservationsLoading ? 'Verificando disponibilidad...' : 'Cargando vehículos...'}
+                    </p>
                 </div>
             </div>
         );
@@ -193,12 +269,13 @@ const VehiclesPage = () => {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-50 px-6 py-25 flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-red-600 mb-4">Error: {error}</p>
+            <div className="min-h-screen bg-gradient-to-br from-neutral-800 via-neutral-900 to-black px-6 py-25 flex items-center justify-center">
+                <div className="text-center bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20">
+                    <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                    <p className="text-red-400 mb-4">Error: {error}</p>
                     <button
                         onClick={() => window.location.reload()}
-                        className="bg-neutral-800 text-white px-4 py-2 rounded-lg hover:bg-neutral-600"
+                        className="bg-white/20 text-white px-6 py-2 rounded-lg hover:bg-white/30 transition-all duration-300"
                     >
                         Reintentar
                     </button>
@@ -215,9 +292,8 @@ const VehiclesPage = () => {
         return `${day}/${month}/${year}`;
     };
 
-
     return (
-        <div className="min-h-screen bg-gradient-to-br from-neutral-800 via-neutral-900 to-black text-white px-6 py-25 ">
+        <div className="min-h-screen bg-gradient-to-br from-neutral-800 via-neutral-900 to-black text-white px-6 py-25">
             <h1 className="text-2xl font-bold mb-6 text-white">Vehículos Disponibles</h1>
 
             {/* Filtros */}
@@ -231,10 +307,11 @@ const VehiclesPage = () => {
                                     <button
                                         key={type}
                                         onClick={() => setFilteredType(type)}
-                                        className={`snap-start flex-shrink-0 w-[calc(33.33%-0.5rem)] px-4 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 whitespace-nowrap ${filteredType === type
+                                        className={`snap-start flex-shrink-0 w-[calc(33.33%-0.5rem)] px-4 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 whitespace-nowrap ${
+                                            filteredType === type
                                                 ? 'bg-white text-neutral-900 shadow-md'
                                                 : 'bg-white/10 text-white active:bg-white/20 border border-white/30'
-                                            }`}
+                                        }`}
                                     >
                                         {type === 'all' ? 'Todos' : type}
                                     </button>
@@ -255,10 +332,11 @@ const VehiclesPage = () => {
                         <button
                             key={type}
                             onClick={() => setFilteredType(type)}
-                            className={`px-6 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 ${filteredType === type
-                                ? 'bg-white text-neutral-900 shadow-md'
-                                : 'bg-white/10 text-white hover:bg-white/20 border border-white/30'
-                                }`}
+                            className={`px-6 py-2 rounded-3xl text-sm font-semibold transition-all duration-300 ${
+                                filteredType === type
+                                    ? 'bg-white text-neutral-900 shadow-md'
+                                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/30'
+                            }`}
                         >
                             {type === 'all' ? 'Todos' : type}
                         </button>
@@ -270,12 +348,21 @@ const VehiclesPage = () => {
                     </div>
                 </div>
             </div>
+
             {/* Mostrar información de filtros activos */}
             {hasDateFilter && (
-                <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-blue-800">
-                        📅 Mostrando disponibilidad del {formatDate(startDate)} al {formatDate(endDate)}
-                    </p>
+                <div className="mb-6 p-6 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-blue-300" />
+                        <p className="text-blue-100">
+                            📅 Mostrando disponibilidad del {formatDate(startDate)} al {formatDate(endDate)}
+                        </p>
+                    </div>
+                    {reservedVehicles.length > 0 && (
+                        <p className="text-blue-200 text-sm mt-2">
+                            {reservedVehicles.length} vehículo{reservedVehicles.length > 1 ? 's' : ''} reservado{reservedVehicles.length > 1 ? 's' : ''} para estas fechas
+                        </p>
+                    )}
                 </div>
             )}
 
@@ -301,16 +388,45 @@ const VehiclesPage = () => {
                 </div>
             )}
 
-            {/* Grid de vehículos - 2 columnas en mobile, 3 en desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                {filteredVehicles.map(vehicle => (
-                    <VehicleCard
-                        key={vehicle.id}
-                        vehicle={vehicle}
-                        isFiltered={hasDateFilter}
-                    />
-                ))}
-            </div>
+            {/* Grid de vehículos disponibles */}
+            {availableVehicles.length > 0 && (
+                <div className="mb-8">
+                    <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-green-400" />
+                        Disponibles ({availableVehicles.length})
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                        {availableVehicles.map(vehicle => (
+                            <VehicleCard
+                                key={vehicle.id}
+                                vehicle={vehicle}
+                                isFiltered={hasDateFilter}
+                                isReserved={false}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Grid de vehículos reservados (solo si hay fechas seleccionadas) */}
+            {hasDateFilter && reservedVehicles.length > 0 && (
+                <div>
+                    <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-orange-400" />
+                        No Disponibles ({reservedVehicles.length})
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                        {reservedVehicles.map(vehicle => (
+                            <VehicleCard
+                                key={vehicle.id}
+                                vehicle={vehicle}
+                                isFiltered={hasDateFilter}
+                                isReserved={true}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
